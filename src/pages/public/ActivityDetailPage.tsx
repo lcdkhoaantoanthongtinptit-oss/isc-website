@@ -27,6 +27,18 @@ export const ActivityDetailPage: React.FC = () => {
     loadDetail();
   }, [slug]);
 
+  function formatDetailDate(dateVal: any): string {
+    if (!dateVal) return '';
+    if (typeof dateVal === 'object' && 'seconds' in dateVal) {
+      return dayjs(dateVal.seconds * 1000).format('DD/MM/YYYY');
+    }
+    if (typeof dateVal === 'object' && 'toDate' in dateVal && typeof dateVal.toDate === 'function') {
+      return dayjs(dateVal.toDate()).format('DD/MM/YYYY');
+    }
+    const parsed = dayjs(dateVal);
+    return parsed.isValid() ? parsed.format('DD/MM/YYYY') : '';
+  }
+
   if (loading) {
     return (
       <div style={{ padding: '120px 0', textAlign: 'center' }}>
@@ -110,7 +122,7 @@ export const ActivityDetailPage: React.FC = () => {
           >
             <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Clock size={16} color="#0284c7" />
-              <span>{dayjs(activity.eventDate as string).format('dddd, DD/MM/YYYY')}</span>
+              <span>{formatDetailDate(activity.eventDate)}</span>
             </span>
             {activity.location && (
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -127,11 +139,20 @@ export const ActivityDetailPage: React.FC = () => {
               overflow: 'hidden',
               marginBottom: '36px',
               boxShadow: '0 16px 36px -10px rgba(0, 0, 0, 0.12)',
+              backgroundColor: '#0f172a',
             }}
           >
             <img
-              src={activity.thumbnailUrl}
+              src={
+                activity.thumbnailUrl ||
+                'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1200&auto=format&fit=crop'
+              }
               alt={activity.title}
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src =
+                  'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1200&auto=format&fit=crop';
+              }}
               style={{ width: '100%', maxHeight: '480px', objectFit: 'cover', display: 'block' }}
             />
           </div>

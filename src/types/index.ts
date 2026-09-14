@@ -122,6 +122,9 @@ export interface WebsiteSettings {
   phone: string;
   facebook: string;
   address: string;
+  imagekitPublicKey?: string;
+  imagekitPrivateKey?: string;
+  imagekitUrlEndpoint?: string;
   updatedAt?: string | Timestamp | Date;
 }
 

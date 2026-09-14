@@ -13,6 +13,7 @@ import {
   Calendar,
   Layers,
   Flame,
+  UploadCloud,
 } from 'lucide-react';
 import { settingsService } from '../../services/settings.service';
 import { WebsiteSettings } from '../../types';
@@ -26,7 +27,7 @@ export const SettingsPage: React.FC = () => {
     async function loadSettings() {
       try {
         setLoading(true);
-        const data = await settingsService.getSettings();
+        const data = await settingsService.getAdminSettings();
         form.setFieldsValue(data);
       } catch (err) {
         message.error('Lỗi khi tải thông tin cấu hình website.');
@@ -333,6 +334,65 @@ export const SettingsPage: React.FC = () => {
               </Form.Item>
             </Col>
           </Row>
+        </div>
+      ),
+    },
+    {
+      key: '5',
+      label: (
+        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <UploadCloud size={16} /> Lưu trữ ảnh (ImageKit.io)
+        </span>
+      ),
+      children: (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div
+            style={{
+              padding: '16px',
+              backgroundColor: '#f0f9ff',
+              borderRadius: '12px',
+              border: '1px solid #bae6fd',
+              color: '#0369a1',
+              fontSize: '0.92rem',
+              lineHeight: 1.6,
+            }}
+          >
+            <strong>Hướng dẫn cấu hình ImageKit.io Upload API:</strong>
+            <ul style={{ margin: '8px 0 0', paddingLeft: '20px' }}>
+              <li>Đăng ký tài khoản miễn phí tại <a href="https://imagekit.io" target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: '#0284c7', fontWeight: 600 }}>imagekit.io</a> (miễn phí 20GB lưu trữ & băng thông mỗi tháng).</li>
+              <li>Vào mục <strong>Developer options &rarr; API keys</strong> để sao chép <em>Public Key</em>, <em>Private Key</em> và <em>URL-endpoint</em>.</li>
+              <li>Điền các trường bên dưới rồi bấm <strong>Lưu thay đổi cài đặt</strong> để kích hoạt lưu trữ đám mây cho tính năng tải ảnh.</li>
+            </ul>
+          </div>
+
+          <Row gutter={16}>
+            <Col xs={24} md={12}>
+              <Form.Item
+                name="imagekitPublicKey"
+                label="ImageKit Public Key"
+                tooltip="Mã công khai dùng để xác thực upload từ phía trình duyệt"
+              >
+                <Input placeholder="public_xxxxxxxxxxxx" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item
+                name="imagekitPrivateKey"
+                label="ImageKit Private Key"
+                tooltip="Mã bảo mật dùng để sinh chữ ký số HMAC-SHA1 khi tải ảnh"
+              >
+                <Input.Password placeholder="private_xxxxxxxxxxxx" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item
+            name="imagekitUrlEndpoint"
+            label="ImageKit URL-Endpoint"
+            tooltip="Đường dẫn phân phối CDN của tài khoản ImageKit của bạn"
+          >
+            <Input placeholder="https://ik.imagekit.io/your_imagekit_id" />
+          </Form.Item>
         </div>
       ),
     },

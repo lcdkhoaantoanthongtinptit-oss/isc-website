@@ -29,6 +29,18 @@ export const ActivitiesPage: React.FC = () => {
     loadData();
   }, []);
 
+  function formatEventDate(dateVal: any): string {
+    if (!dateVal) return '';
+    if (typeof dateVal === 'object' && 'seconds' in dateVal) {
+      return dayjs(dateVal.seconds * 1000).format('DD/MM/YYYY');
+    }
+    if (typeof dateVal === 'object' && 'toDate' in dateVal && typeof dateVal.toDate === 'function') {
+      return dayjs(dateVal.toDate()).format('DD/MM/YYYY');
+    }
+    const parsed = dayjs(dateVal);
+    return parsed.isValid() ? parsed.format('DD/MM/YYYY') : '';
+  }
+
   const filtered = activities.filter((act) => {
     const matchCategory = selectedCategory === 'Tất cả' || act.category === selectedCategory;
     const matchSearch =
@@ -153,10 +165,18 @@ export const ActivitiesPage: React.FC = () => {
                     backgroundColor: '#ffffff',
                   }}
                 >
-                  <div style={{ position: 'relative', height: '210px', overflow: 'hidden' }}>
+                  <div style={{ position: 'relative', height: '210px', overflow: 'hidden', backgroundColor: '#0f172a' }}>
                     <img
-                      src={act.thumbnailUrl}
+                      src={
+                        act.thumbnailUrl ||
+                        'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1200&auto=format&fit=crop'
+                      }
                       alt={act.title}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src =
+                          'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1200&auto=format&fit=crop';
+                      }}
                       style={{
                         width: '100%',
                         height: '100%',
@@ -193,7 +213,7 @@ export const ActivitiesPage: React.FC = () => {
                       }}
                     >
                       <Clock size={14} />
-                      <span>{dayjs(act.eventDate as string).format('DD/MM/YYYY')}</span>
+                      <span>{formatEventDate(act.eventDate)}</span>
                       {act.location && (
                         <>
                           <span style={{ margin: '0 4px' }}>•</span>
@@ -226,7 +246,7 @@ export const ActivitiesPage: React.FC = () => {
                     >
                       {act.shortDescription}
                     </p>
-                    <Link to={`/hoat-dong/${act.slug}`}>
+                    <Link to={`/hoat-dong/${act.slug || act.id}`}>
                       <Button
                         type="default"
                         block

@@ -59,6 +59,14 @@ export const ActivitiesAdminPage: React.FC = () => {
     loadActivities();
   }, []);
 
+  const parseToDayjs = (d: any) => {
+    if (!d) return dayjs();
+    if (typeof d === 'object' && 'seconds' in d) return dayjs(d.seconds * 1000);
+    if (typeof d === 'object' && 'toDate' in d && typeof d.toDate === 'function') return dayjs(d.toDate());
+    const parsed = dayjs(d);
+    return parsed.isValid() ? parsed : dayjs();
+  };
+
   const handleOpenCreate = () => {
     setEditingActivity(null);
     setThumbnailUrl('');
@@ -78,7 +86,7 @@ export const ActivitiesAdminPage: React.FC = () => {
     form.resetFields();
     form.setFieldsValue({
       ...act,
-      eventDate: dayjs(act.eventDate as string),
+      eventDate: parseToDayjs(act.eventDate),
     });
     setIsModalOpen(true);
   };
@@ -189,7 +197,7 @@ export const ActivitiesAdminPage: React.FC = () => {
       dataIndex: 'eventDate',
       key: 'eventDate',
       width: 130,
-      render: (d) => dayjs(d as string).format('DD/MM/YYYY'),
+      render: (d) => parseToDayjs(d).format('DD/MM/YYYY'),
     },
     {
       title: 'Nổi bật',

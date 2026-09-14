@@ -90,6 +90,14 @@ export const checkCollaboratorResult = functions
 export const setAdminRole = functions
   .region('asia-southeast1')
   .https.onCall(async (data, context) => {
+    // Strictly require caller to be authenticated
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        'unauthenticated',
+        'Yêu cầu xác thực tài khoản trước khi thực hiện thao tác.'
+      );
+    }
+
     // Only allow existing admin to grant role (or bootstrap via CLI/admin tool)
     if (!context.auth?.token?.role || context.auth.token.role !== 'admin') {
       // If no admin exists yet in database, allow first-time setup or check

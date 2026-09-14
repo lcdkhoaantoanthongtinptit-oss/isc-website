@@ -16,20 +16,90 @@ import { Activity } from '../types';
 
 const LOCAL_ACTIVITIES_KEY = 'lcd_activities_data';
 
+export const DEFAULT_ACTIVITIES: Activity[] = [
+  {
+    id: 'act_ptit_ctf_2026',
+    title: 'Giải đấu Cyber Security CTF Thường niên 2026 - PTIT CTF',
+    slug: 'giai-dau-cyber-security-ctf-ptit-2026',
+    category: 'Công nghệ',
+    isFeatured: true,
+    isPublished: true,
+    location: 'Hội trường A2 - Học viện Công nghệ Bưu chính Viễn thông',
+    eventDate: '2026-04-18T08:00:00.000Z',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1200&auto=format&fit=crop',
+    shortDescription:
+      'Sân chơi học thuật bảo mật chuyên sâu dành cho sinh viên Học viện với các mảng Web Exploitation, Reverse Engineering, Pwnable, Cryptography và Forensic.',
+    description: `Giải đấu Cyber Security CTF là sự kiện thường niên do Liên chi đoàn Khoa An toàn thông tin tổ chức, nhằm tạo sân chơi thực chiến giúp sinh viên rèn luyện tư duy phân tích, giải mã và khai thác lỗ hổng bảo mật.
+    
+Các đội thi sẽ tranh tài liên tục trong 12 giờ ở các thử thách đa dạng từ cơ bản đến nâng cao. Ban tổ chức và các cựu sinh viên đang làm việc tại các tập đoàn an ninh mạng hàng đầu sẽ trực tiếp chấm điểm và trao giải.`,
+    createdAt: '2026-03-01T00:00:00.000Z',
+    updatedAt: '2026-03-01T00:00:00.000Z',
+  },
+  {
+    id: 'act_workshop_soc_pentest_2026',
+    title: 'Hội thảo Công nghệ: Lộ trình nghề nghiệp SOC & Pentest trong kỷ nguyên AI',
+    slug: 'hoi-thao-lo-trinh-nghe-nghiep-soc-pentest',
+    category: 'Học thuật',
+    isFeatured: true,
+    isPublished: true,
+    location: 'Phòng Hội thảo Quốc tế - Học viện CNBCVT',
+    eventDate: '2026-03-28T14:00:00.000Z',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=1200&auto=format&fit=crop',
+    shortDescription:
+      'Gặp gỡ và đối thoại cùng các chuyên gia hàng đầu từ các trung tâm giám sát an ninh mạng, giải đáp lộ trình nghề nghiệp và định hướng kỹ năng thực tế.',
+    description: `Hội thảo mang đến cái nhìn toàn cảnh về thị trường việc làm An toàn thông tin hiện nay, đặc biệt là vai trò của kỹ sư SOC (Security Operations Center) và chuyên gia đánh giá lỗ hổng Pentest.
+    
+Sinh viên tham gia sẽ được chia sẻ kinh nghiệm ứng tuyển, thực tập và phương pháp tự xây dựng lab thực hành tại nhà.`,
+    createdAt: '2026-02-15T00:00:00.000Z',
+    updatedAt: '2026-02-15T00:00:00.000Z',
+  },
+  {
+    id: 'act_volunteer_summer_2026',
+    title: 'Chiến dịch Tình nguyện Mùa hè xanh - Tuổi trẻ ATTT vì cộng đồng số',
+    slug: 'chien-dich-tinh-nguyen-mua-he-xanh-2026',
+    category: 'Tình nguyện',
+    isFeatured: true,
+    isPublished: true,
+    location: 'Địa bàn tỉnh miền núi phía Bắc',
+    eventDate: '2026-07-10T07:30:00.000Z',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?q=80&w=1200&auto=format&fit=crop',
+    shortDescription:
+      'Hành trình mang tri thức số, tuyên truyền kỹ năng phòng chống lừa đảo trực tuyến và an toàn trên mạng xã hội cho thanh thiếu niên địa phương.',
+    description: `Chiến dịch tình nguyện cao điểm của đoàn viên thanh niên Liên chi đoàn Khoa ATTT. Bên cạnh các hoạt động an sinh xã hội, đội ngũ tình nguyện viên sẽ trực tiếp đứng lớp hướng dẫn người dân và học sinh kỹ năng sử dụng Internet an toàn, bảo vệ thông tin cá nhân.`,
+    createdAt: '2026-01-20T00:00:00.000Z',
+    updatedAt: '2026-01-20T00:00:00.000Z',
+  },
+];
+
 function getLocalActivities(): Activity[] {
   const data = localStorage.getItem(LOCAL_ACTIVITIES_KEY);
   if (data) {
     try {
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
     } catch {
-      return [];
+      // ignore
     }
   }
-  return [];
+  return DEFAULT_ACTIVITIES;
 }
 
 function saveLocalActivities(list: Activity[]) {
   localStorage.setItem(LOCAL_ACTIVITIES_KEY, JSON.stringify(list));
+}
+
+function parseEventTime(dateVal: any): number {
+  if (!dateVal) return 0;
+  if (typeof dateVal === 'object' && 'seconds' in dateVal) {
+    return dateVal.seconds * 1000;
+  }
+  if (typeof dateVal === 'object' && 'toDate' in dateVal && typeof dateVal.toDate === 'function') {
+    return dateVal.toDate().getTime();
+  }
+  const parsed = new Date(dateVal).getTime();
+  return isNaN(parsed) ? 0 : parsed;
 }
 
 export const activityService = {
@@ -37,19 +107,38 @@ export const activityService = {
     if (isFirebaseConfigured && db) {
       try {
         const collRef = collection(db, 'activities');
-        let q = query(collRef, orderBy('eventDate', 'desc'));
-        if (onlyPublished) {
-          q = query(collRef, where('isPublished', '==', true), orderBy('eventDate', 'desc'));
+        let snap;
+        try {
+          let q = query(collRef, orderBy('eventDate', 'desc'));
+          if (onlyPublished) {
+            q = query(collRef, where('isPublished', '==', true), orderBy('eventDate', 'desc'));
+          }
+          snap = await getDocs(q);
+        } catch (queryErr) {
+          // Fallback when composite index is not deployed yet
+          console.warn('[Activities] Compound query index missing, falling back to full collection query:', queryErr);
+          snap = await getDocs(collRef);
         }
-        const snap = await getDocs(q);
-        return snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Activity[];
+
+        let docs = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Activity[];
+        if (onlyPublished) {
+          docs = docs.filter((a) => a.isPublished !== false);
+        }
+        docs.sort((a, b) => parseEventTime(b.eventDate) - parseEventTime(a.eventDate));
+
+        if (docs.length > 0) {
+          return docs;
+        }
       } catch (err) {
         console.error('[Activities] Firestore error:', err);
-        return [];
       }
     }
 
-    return [];
+    const local = getLocalActivities();
+    if (onlyPublished) {
+      return local.filter((a) => a.isPublished !== false);
+    }
+    return local;
   },
 
   async getActivityBySlug(slug: string): Promise<Activity | null> {
@@ -58,30 +147,37 @@ export const activityService = {
         const collRef = collection(db, 'activities');
         const q = query(collRef, where('slug', '==', slug));
         const snap = await getDocs(q);
-        if (snap.empty) return null;
-        return { id: snap.docs[0].id, ...snap.docs[0].data() } as Activity;
+        if (!snap.empty) {
+          return { id: snap.docs[0].id, ...snap.docs[0].data() } as Activity;
+        }
+        // Fallback check by document ID
+        return await this.getActivityById(slug);
       } catch (err) {
         console.error('[Activities] Firestore slug error:', err);
-        return null;
+        return await this.getActivityById(slug);
       }
     }
 
-    return null;
+    const list = getLocalActivities();
+    const found = list.find((a) => a.slug === slug || a.id === slug);
+    return found || null;
   },
 
   async getActivityById(id: string): Promise<Activity | null> {
     if (isFirebaseConfigured && db) {
       try {
         const snap = await getDoc(doc(db, 'activities', id));
-        if (!snap.exists()) return null;
-        return { id: snap.id, ...snap.data() } as Activity;
+        if (snap.exists()) {
+          return { id: snap.id, ...snap.data() } as Activity;
+        }
       } catch (err) {
         console.error('[Activities] Firestore ID error:', err);
-        return null;
       }
     }
 
-    return null;
+    const list = getLocalActivities();
+    const found = list.find((a) => a.id === id);
+    return found || null;
   },
 
   async createActivity(data: Omit<Activity, 'id'>): Promise<Activity> {

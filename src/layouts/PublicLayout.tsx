@@ -341,7 +341,7 @@ export const PublicLayout: React.FC = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.88rem', color: '#94a3b8' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                   <MapPin size={18} color="#38bdf8" style={{ marginTop: '3px', flexShrink: 0 }} />
-                  <span>Văn phòng Đoàn TN Khoa ATTT, Học viện Công nghệ Bưu chính Viễn thông</span>
+                  <span>Học viên Công nghệ Bưu chính Viễn thông, 96A, Trần Phú, Hà Đông, Hà Nội </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <Mail size={16} color="#38bdf8" style={{ flexShrink: 0 }} />
@@ -349,7 +349,7 @@ export const PublicLayout: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <Phone size={16} color="#38bdf8" style={{ flexShrink: 0 }} />
-                  <span>024.3754.7511</span>
+                  <span>038 800 7519</span>
                 </div>
               </div>
             </div>

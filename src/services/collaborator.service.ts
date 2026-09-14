@@ -71,30 +71,19 @@ export const collaboratorService = {
     // Secure Firestore doc lookup by studentId doc ID (if firestore is configured)
     if (isFirebaseConfigured && db) {
       try {
-        // 1. Try reading from sanitized public collection first (allowed get without list)
+        // 1. Strictly read from sanitized public projection collection ONLY (No access to master collaborators)
         const pubDocRef = doc(db, 'collaborator_results', studentId);
         const pubSnap = await getDoc(pubDocRef);
-        let data: any = null;
-        if (pubSnap.exists()) {
-          data = pubSnap.data();
-        } else {
-          // Fallback to master collection if user has permission
-          try {
-            const masterDocRef = doc(db, 'collaborators', studentId);
-            const masterSnap = await getDoc(masterDocRef);
-            if (masterSnap.exists()) {
-              data = masterSnap.data();
-            }
-          } catch {
-            // Master collection is permission-denied for public (expected)
-          }
+        if (!pubSnap.exists()) {
+          return { found: false };
         }
 
+        const data = pubSnap.data();
         if (!data) {
           return { found: false };
         }
 
-        // Map department name
+        // Map department names safely
         let acceptedDeptName = null;
         if (data.acceptedDepartmentId) {
           try {
@@ -105,10 +94,23 @@ export const collaboratorService = {
           }
         }
 
+        let appliedDeptName = null;
+        if (data.appliedDepartmentId) {
+          try {
+            const appliedDeptDoc = await getDoc(doc(db, 'departments', data.appliedDepartmentId));
+            appliedDeptName = appliedDeptDoc.exists() ? appliedDeptDoc.data().name : data.appliedDepartmentId;
+          } catch {
+            appliedDeptName = data.appliedDepartmentId;
+          }
+        }
+
+        // Return STRICTLY sanitized public fields only.
+        // Omit phone, email, adminNote, form answers, Facebook URLs, internal metadata.
         return {
           found: true,
           studentId: data.studentId,
           fullName: data.fullName,
+          appliedDepartment: appliedDeptName,
           acceptedDepartment: acceptedDeptName,
           position: data.position,
           status: data.status,

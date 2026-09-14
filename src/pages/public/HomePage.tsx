@@ -40,6 +40,18 @@ export const HomePage: React.FC = () => {
   const [members, setMembers] = useState<ExecutiveMember[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
 
+  function formatEventDate(dateVal: any): string {
+    if (!dateVal) return '';
+    if (typeof dateVal === 'object' && 'seconds' in dateVal) {
+      return dayjs(dateVal.seconds * 1000).format('DD/MM/YYYY');
+    }
+    if (typeof dateVal === 'object' && 'toDate' in dateVal && typeof dateVal.toDate === 'function') {
+      return dayjs(dateVal.toDate()).format('DD/MM/YYYY');
+    }
+    const parsed = dayjs(dateVal);
+    return parsed.isValid() ? parsed.format('DD/MM/YYYY') : '';
+  }
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -51,7 +63,11 @@ export const HomePage: React.FC = () => {
           departmentService.getDepartments(),
         ]);
         setSettings(settData);
-        setActivities(actData.slice(0, 3)); // 3 featured activities
+        // Prioritize featured activities, backfill with newest published activities
+        const featured = actData.filter((a) => a.isFeatured);
+        const nonFeatured = actData.filter((a) => !a.isFeatured);
+        const combined = [...featured, ...nonFeatured];
+        setActivities(combined.slice(0, 3));
         setMembers(memData);
         setDepartments(deptData);
       } catch (err) {
@@ -494,6 +510,29 @@ export const HomePage: React.FC = () => {
                 </Col>
               ))}
             </Row>
+          ) : activities.length === 0 ? (
+            <div
+              className="glass-card"
+              style={{
+                padding: '48px 24px',
+                textAlign: 'center',
+                backgroundColor: '#ffffff',
+                borderRadius: '16px',
+              }}
+            >
+              <Calendar size={48} color="#94a3b8" style={{ marginBottom: '16px' }} />
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
+                Đang cập nhật các hoạt động mới
+              </h3>
+              <p style={{ color: '#64748b', maxWidth: '460px', margin: '0 auto 20px' }}>
+                Các phong trào, hội thảo học thuật và giải đấu CTF của Liên chi đoàn Khoa ATTT sẽ được đăng tải sớm nhất.
+              </p>
+              <Link to="/hoat-dong">
+                <Button type="primary" style={{ fontWeight: 600 }}>
+                  Xem danh mục sự kiện
+                </Button>
+              </Link>
+            </div>
           ) : (
             <Row gutter={[24, 24]}>
               {activities.map((act) => (
@@ -506,12 +545,21 @@ export const HomePage: React.FC = () => {
                       flexDirection: 'column',
                       overflow: 'hidden',
                       backgroundColor: '#ffffff',
+                      borderRadius: '16px',
                     }}
                   >
-                    <div style={{ position: 'relative', height: '210px', overflow: 'hidden' }}>
+                    <div style={{ position: 'relative', height: '210px', overflow: 'hidden', backgroundColor: '#0f172a' }}>
                       <img
-                        src={act.thumbnailUrl}
+                        src={
+                          act.thumbnailUrl ||
+                          'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1200&auto=format&fit=crop'
+                        }
                         alt={act.title}
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src =
+                            'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1200&auto=format&fit=crop';
+                        }}
                         style={{
                           width: '100%',
                           height: '100%',
@@ -548,7 +596,7 @@ export const HomePage: React.FC = () => {
                         }}
                       >
                         <Clock size={14} />
-                        <span>{dayjs(act.eventDate as string).format('DD/MM/YYYY')}</span>
+                        <span>{formatEventDate(act.eventDate)}</span>
                       </div>
                       <h3
                         style={{
@@ -572,7 +620,7 @@ export const HomePage: React.FC = () => {
                       >
                         {act.shortDescription}
                       </p>
-                      <Link to={`/hoat-dong/${act.slug}`}>
+                      <Link to={`/hoat-dong/${act.slug || act.id}`}>
                         <Button
                           type="default"
                           block
