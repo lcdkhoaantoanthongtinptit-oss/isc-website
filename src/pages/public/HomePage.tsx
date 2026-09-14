@@ -660,13 +660,32 @@ export const HomePage: React.FC = () => {
             </p>
           </div>
 
-          <Row gutter={[24, 24]} justify="center">
-            {members.map((mem) => (
-              <Col xs={24} sm={12} md={8} lg={6} key={mem.id}>
+          {(() => {
+            const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const isBiThu = (pos: string) => normalize(pos).includes('bi thu') && !normalize(pos).includes('pho');
+            const isPhoBS = (pos: string) => normalize(pos).includes('pho bi thu');
+            const isTruongBan = (pos: string) => normalize(pos).includes('truong ban');
+            const isPhoBan = (pos: string) => normalize(pos).includes('pho ban');
+
+            const tier1 = members.filter(m => isBiThu(m.position) || isPhoBS(m.position));
+            const tier2 = members.filter(m => isTruongBan(m.position));
+            const tier3 = members.filter(m => isPhoBan(m.position));
+            const others = members.filter(m =>
+              !isBiThu(m.position) && !isPhoBS(m.position) &&
+              !isTruongBan(m.position) && !isPhoBan(m.position)
+            );
+
+            const renderMemberCard = (mem: ExecutiveMember, isLeader = false) => {
+              let displayName = mem.fullName;
+              if (!mem.cohort && displayName.includes(' - ')) {
+                displayName = displayName.split(' - ')[0].trim();
+              }
+              return (
                 <div
+                  key={mem.id}
                   className="glass-card"
                   style={{
-                    padding: '28px 20px',
+                    padding: isLeader ? '32px 24px' : '24px 18px',
                     textAlign: 'center',
                     backgroundColor: '#ffffff',
                     height: '100%',
@@ -675,13 +694,17 @@ export const HomePage: React.FC = () => {
                 >
                   <div
                     style={{
-                      width: '110px',
-                      height: '110px',
+                      width: isLeader ? '120px' : '96px',
+                      height: isLeader ? '120px' : '96px',
                       borderRadius: '50%',
-                      margin: '0 auto 16px',
+                      margin: '0 auto 14px',
                       padding: '4px',
-                      background: '#0284c7',
-                      boxShadow: '0 8px 16px rgba(2, 132, 199, 0.2)',
+                      background: isLeader
+                        ? 'linear-gradient(135deg, #0284c7, #0ea5e9)'
+                        : '#94a3b8',
+                      boxShadow: isLeader
+                        ? '0 8px 24px rgba(2, 132, 199, 0.3)'
+                        : '0 4px 12px rgba(0,0,0,0.1)',
                     }}
                   >
                     <img
@@ -696,61 +719,118 @@ export const HomePage: React.FC = () => {
                       }}
                     />
                   </div>
-                  {/* Member Name & Cohort */}
-                  {(() => {
-                    let displayName = mem.fullName;
-                    let displayCohort = mem.cohort;
-                    if (!displayCohort && displayName.includes(' - ')) {
-                      const parts = displayName.split(' - ');
-                      displayName = parts[0].trim();
-                      displayCohort = parts[1].trim();
-                    }
-                    return (
-                      <>
-                        <h4 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 4px', color: '#0f172a' }}>
-                          {displayName}
-                        </h4>
-                        {/* <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                          {displayCohort && (
-                            <span
-                              style={{
-                                fontSize: '0.78rem',
-                                fontWeight: 700,
-                                color: '#0284c7',
-                                backgroundColor: '#f0f9ff',
-                                padding: '2px 8px',
-                                borderRadius: '6px',
-                                border: '1px solid #bae6fd',
-                              }}
-                            >
-                              Khóa {displayCohort}
-                            </span>
-                          )}
-                          {mem.className && (
-                            <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 500 }}>
-                              {mem.className}
-                            </span>
-                          )}
-                        </div> */}
-                      </>
-                    );
-                  })()}
-                  <div style={{ color: '#0284c7', fontWeight: 600, fontSize: '0.88rem', marginBottom: '4px' }}>
+                  <h4 style={{
+                    fontSize: isLeader ? '1.1rem' : '0.95rem',
+                    fontWeight: 700,
+                    margin: '0 0 4px',
+                    color: '#0f172a',
+                  }}>
+                    {displayName}
+                  </h4>
+                  <div style={{
+                    color: isLeader ? '#0284c7' : '#475569',
+                    fontWeight: 600,
+                    fontSize: isLeader ? '0.9rem' : '0.82rem',
+                    marginBottom: '4px',
+                  }}>
                     {mem.position}
                   </div>
-                  <div style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: 500, marginBottom: '14px' }}>
+                  <div style={{ color: '#94a3b8', fontSize: '0.78rem', fontWeight: 500, marginBottom: mem.email ? '10px' : '0' }}>
                     {mem.term}
                   </div>
                   {mem.email && (
-                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                      <Mail size={12} style={{ display: 'inline', marginRight: '4px' }} />
+                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                      <Mail size={11} style={{ display: 'inline', marginRight: '4px' }} />
                       {mem.email}
                     </div>
                   )}
                 </div>
-              </Col>
-            ))}
-          </Row>
+              );
+            };
+
+            const tierLabel = (label: string) => (
+              <div style={{
+                textAlign: 'center',
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+              }}>
+                <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, transparent, #e2e8f0)' }} />
+                <span style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  color: '#94a3b8',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {label}
+                </span>
+                <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to left, transparent, #e2e8f0)' }} />
+              </div>
+            );
+
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+                {/* Tier 1: Bí thư + Phó Bí thư */}
+                {tier1.length > 0 && (
+                  <div>
+                    {tierLabel('Bí thư – Phó Bí thư')}
+                    <Row gutter={[24, 24]} justify="center">
+                      {tier1.map(mem => (
+                        <Col xs={24} sm={12} md={10} lg={8} key={mem.id}>
+                          {renderMemberCard(mem, true)}
+                        </Col>
+                      ))}
+                    </Row>
+                  </div>
+                )}
+
+                {/* Tier 2: Trưởng ban */}
+                {tier2.length > 0 && (
+                  <div>
+                    {tierLabel('Trưởng ban')}
+                    <Row gutter={[24, 24]} justify="center">
+                      {tier2.map(mem => (
+                        <Col xs={24} sm={12} md={8} lg={6} key={mem.id}>
+                          {renderMemberCard(mem, false)}
+                        </Col>
+                      ))}
+                    </Row>
+                  </div>
+                )}
+
+                {/* Tier 3: Phó ban */}
+                {tier3.length > 0 && (
+                  <div>
+                    {tierLabel('Phó ban')}
+                    <Row gutter={[24, 24]} justify="center">
+                      {tier3.map(mem => (
+                        <Col xs={24} sm={12} md={8} lg={6} key={mem.id}>
+                          {renderMemberCard(mem, false)}
+                        </Col>
+                      ))}
+                    </Row>
+                  </div>
+                )}
+
+                {/* Others */}
+                {others.length > 0 && (
+                  <div>
+                    {tierLabel('Thành viên BCH')}
+                    <Row gutter={[24, 24]} justify="center">
+                      {others.map(mem => (
+                        <Col xs={24} sm={12} md={8} lg={6} key={mem.id}>
+                          {renderMemberCard(mem, false)}
+                        </Col>
+                      ))}
+                    </Row>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </section>
 
