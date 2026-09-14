@@ -145,7 +145,7 @@ export const CheckResultPage: React.FC = () => {
           <div style={{ maxWidth: '560px', margin: '0 auto' }}>
             <div
               style={{
-                background: 'linear-gradient(135deg, #201d7fff 0%, #1f1b99ff 50%, #1c55b9ff 100%)',
+                background: 'linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0284c7 100%)',
                 borderRadius: '24px',
                 padding: '48px 36px',
                 textAlign: 'center',
