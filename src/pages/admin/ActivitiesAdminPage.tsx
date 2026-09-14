@@ -93,11 +93,13 @@ export const ActivitiesAdminPage: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     try {
+      setActivities((prev) => prev.filter((a) => a.id !== id));
       await activityService.deleteActivity(id);
       message.success('Đã xóa hoạt động thành công.');
       loadActivities();
     } catch (err: any) {
-      message.error('Không thể xóa hoạt động: ' + err.message);
+      message.error('Không thể xóa hoạt động: ' + (err?.message || 'Đã có lỗi xảy ra.'));
+      loadActivities();
     }
   };
 

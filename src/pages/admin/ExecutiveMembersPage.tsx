@@ -102,11 +102,13 @@ export const ExecutiveMembersPage: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     try {
+      setMembers((prev) => prev.filter((m) => m.id !== id));
       await memberService.deleteMember(id);
       message.success('Đã xóa thành viên khỏi danh sách BCH.');
       loadMembers();
     } catch (err: any) {
-      message.error('Lỗi khi xóa: ' + err.message);
+      message.error('Lỗi khi xóa: ' + (err?.message || 'Đã có lỗi xảy ra.'));
+      loadMembers();
     }
   };
 

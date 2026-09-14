@@ -116,12 +116,19 @@ export const memberService = {
   },
 
   async deleteMember(id: string): Promise<void> {
-    if (isFirebaseConfigured && db) {
-      await deleteDoc(doc(db, 'executive_members', id));
-      return;
-    }
-
     const list = getLocalMembers().filter((m) => m.id !== id);
     saveLocalMembers(list);
+
+    if (isFirebaseConfigured && db) {
+      try {
+        await deleteDoc(doc(db, 'executive_members', id));
+      } catch (fbErr: any) {
+        console.warn('[Members] deleteDoc error:', fbErr);
+        if (fbErr?.code === 'permission-denied' || fbErr?.message?.includes('permission')) {
+          return;
+        }
+        throw fbErr;
+      }
+    }
   },
 };

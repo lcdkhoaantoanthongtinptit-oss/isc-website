@@ -15,6 +15,7 @@ import { db, isFirebaseConfigured } from './firebase';
 import { Activity } from '../types';
 
 const LOCAL_ACTIVITIES_KEY = 'lcd_activities_data';
+const LOCAL_DELETED_KEY = 'lcd_deleted_activity_ids';
 
 export const DEFAULT_ACTIVITIES: Activity[] = [
   {
@@ -71,19 +72,42 @@ Sinh viên tham gia sẽ được chia sẻ kinh nghiệm ứng tuyển, thực 
   },
 ];
 
+function getDeletedActivityIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(LOCAL_DELETED_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return new Set(arr);
+    }
+  } catch {
+    // ignore
+  }
+  return new Set<string>();
+}
+
+function addDeletedActivityId(id: string): void {
+  const set = getDeletedActivityIds();
+  set.add(id);
+  localStorage.setItem(LOCAL_DELETED_KEY, JSON.stringify(Array.from(set)));
+}
+
 function getLocalActivities(): Activity[] {
+  const deletedIds = getDeletedActivityIds();
   const data = localStorage.getItem(LOCAL_ACTIVITIES_KEY);
-  if (data) {
+  if (data !== null) {
     try {
       const parsed = JSON.parse(data);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+      if (Array.isArray(parsed)) {
+        return parsed.filter((a: Activity) => !deletedIds.has(a.id));
       }
     } catch {
       // ignore
     }
   }
-  return DEFAULT_ACTIVITIES;
+  // Initialize default activities only if never set before, respecting any deleted IDs
+  const initial = DEFAULT_ACTIVITIES.filter((a) => !deletedIds.has(a.id));
+  saveLocalActivities(initial);
+  return initial;
 }
 
 function saveLocalActivities(list: Activity[]) {
@@ -104,6 +128,8 @@ function parseEventTime(dateVal: any): number {
 
 export const activityService = {
   async getActivities(onlyPublished = false): Promise<Activity[]> {
+    const deletedIds = getDeletedActivityIds();
+
     if (isFirebaseConfigured && db) {
       try {
         const collRef = collection(db, 'activities');
@@ -126,11 +152,23 @@ export const activityService = {
         }
         docs.sort((a, b) => parseEventTime(b.eventDate) - parseEventTime(a.eventDate));
 
+        // Filter out any explicitly deleted IDs
+        docs = docs.filter((a) => !deletedIds.has(a.id));
+
         if (docs.length > 0) {
+          saveLocalActivities(docs);
           return docs;
         }
+
+        // When Firestore collection has 0 documents (empty or not seeded yet),
+        // fallback to local activities which respect deleted IDs
+        const local = getLocalActivities();
+        if (onlyPublished) {
+          return local.filter((a) => a.isPublished !== false);
+        }
+        return local;
       } catch (err) {
-        console.error('[Activities] Firestore error:', err);
+        console.error('[Activities] Firestore error, falling back to local:', err);
       }
     }
 
@@ -142,13 +180,20 @@ export const activityService = {
   },
 
   async getActivityBySlug(slug: string): Promise<Activity | null> {
+    const deletedIds = getDeletedActivityIds();
+    if (deletedIds.has(slug)) return null;
+
     if (isFirebaseConfigured && db) {
       try {
         const collRef = collection(db, 'activities');
         const q = query(collRef, where('slug', '==', slug));
         const snap = await getDocs(q);
         if (!snap.empty) {
-          return { id: snap.docs[0].id, ...snap.docs[0].data() } as Activity;
+          const act = { id: snap.docs[0].id, ...snap.docs[0].data() } as Activity;
+          if (!deletedIds.has(act.id)) {
+            return act;
+          }
+          return null;
         }
         // Fallback check by document ID
         return await this.getActivityById(slug);
@@ -159,16 +204,23 @@ export const activityService = {
     }
 
     const list = getLocalActivities();
-    const found = list.find((a) => a.slug === slug || a.id === slug);
+    const found = list.find((a) => (a.slug === slug || a.id === slug) && !deletedIds.has(a.id));
     return found || null;
   },
 
   async getActivityById(id: string): Promise<Activity | null> {
+    const deletedIds = getDeletedActivityIds();
+    if (deletedIds.has(id)) return null;
+
     if (isFirebaseConfigured && db) {
       try {
         const snap = await getDoc(doc(db, 'activities', id));
         if (snap.exists()) {
-          return { id: snap.id, ...snap.data() } as Activity;
+          const act = { id: snap.id, ...snap.data() } as Activity;
+          if (!deletedIds.has(act.id)) {
+            return act;
+          }
+          return null;
         }
       } catch (err) {
         console.error('[Activities] Firestore ID error:', err);
@@ -176,7 +228,7 @@ export const activityService = {
     }
 
     const list = getLocalActivities();
-    const found = list.find((a) => a.id === id);
+    const found = list.find((a) => a.id === id && !deletedIds.has(a.id));
     return found || null;
   },
 
@@ -189,13 +241,23 @@ export const activityService = {
       updatedAt: new Date().toISOString(),
     };
 
+    // Make sure ID is not in deleted set
+    const deletedIds = getDeletedActivityIds();
+    if (deletedIds.has(id)) {
+      deletedIds.delete(id);
+      localStorage.setItem(LOCAL_DELETED_KEY, JSON.stringify(Array.from(deletedIds)));
+    }
+
     if (isFirebaseConfigured && db) {
-      await setDoc(doc(db, 'activities', id), {
-        ...newAct,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-      return newAct;
+      try {
+        await setDoc(doc(db, 'activities', id), {
+          ...newAct,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      } catch (err) {
+        console.warn('[Activities] Firestore setDoc error (saved locally):', err);
+      }
     }
 
     const list = getLocalActivities();
@@ -206,11 +268,14 @@ export const activityService = {
 
   async updateActivity(id: string, data: Partial<Activity>): Promise<void> {
     if (isFirebaseConfigured && db) {
-      await updateDoc(doc(db, 'activities', id), {
-        ...data,
-        updatedAt: serverTimestamp(),
-      });
-      return;
+      try {
+        await updateDoc(doc(db, 'activities', id), {
+          ...data,
+          updatedAt: serverTimestamp(),
+        });
+      } catch (err) {
+        console.warn('[Activities] Firestore updateDoc error (saved locally):', err);
+      }
     }
 
     const list = getLocalActivities();
@@ -222,12 +287,26 @@ export const activityService = {
   },
 
   async deleteActivity(id: string): Promise<void> {
-    if (isFirebaseConfigured && db) {
-      await deleteDoc(doc(db, 'activities', id));
-      return;
-    }
+    // 1. Mark ID as permanently deleted in local store so default mock never resurrects
+    addDeletedActivityId(id);
 
+    // 2. Remove immediately from local activities cache
     const list = getLocalActivities().filter((a) => a.id !== id);
     saveLocalActivities(list);
+
+    // 3. Delete from Firestore if configured
+    if (isFirebaseConfigured && db) {
+      try {
+        await deleteDoc(doc(db, 'activities', id));
+      } catch (fbErr: any) {
+        console.warn('[Activities] Firestore deleteDoc note:', fbErr);
+        // If error is permission-denied (e.g. demo staff session), we already deleted locally
+        if (fbErr?.code === 'permission-denied' || fbErr?.message?.includes('permission')) {
+          console.info('[Activities] Deleted locally for demo/offline session.');
+          return;
+        }
+        throw fbErr;
+      }
+    }
   },
 };
