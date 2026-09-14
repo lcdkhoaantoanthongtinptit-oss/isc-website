@@ -145,11 +145,11 @@ export const CheckResultPage: React.FC = () => {
           <div style={{ maxWidth: '560px', margin: '0 auto' }}>
             <div
               style={{
-                background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)',
+                background: 'linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #b91c1c 100%)',
                 borderRadius: '24px',
                 padding: '48px 36px',
                 textAlign: 'center',
-                boxShadow: '0 20px 60px rgba(15,23,42,0.18)',
+                boxShadow: '0 20px 60px rgba(127,29,29,0.35)',
                 position: 'relative',
                 overflow: 'hidden',
               }}
@@ -176,7 +176,7 @@ export const CheckResultPage: React.FC = () => {
 
               {/* Follow fanpage CTA */}
               <a
-                href="https://facebook.com/lcdattt"
+                href="https://www.facebook.com/lcd.attt.ptit"
                 target="_blank"
                 rel="noreferrer"
                 style={{

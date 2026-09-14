@@ -39,10 +39,10 @@ export const DEFAULT_SETTINGS: Omit<WebsiteSettings, SensitiveKey> = {
   totalActivities: 35,
   totalCollaborators: 80,
   activeYears: 2,
-  email: 'lcdattt@ptit.edu.vn',
-  phone: '024.3754.7511',
-  facebook: 'https://facebook.com/lcdattt',
-  address: 'Văn phòng Đoàn TN Khoa ATTT, Học viện Công nghệ Bưu chính Viễn thông',
+  email: 'lcdkhoaantoanthongtinptit@gmail.com',
+  phone: '038 800 7519',
+  facebook: 'https://www.facebook.com/lcd.attt.ptit',
+  address: 'Văn phòng Đoàn TN Khoa ATTT, Học viện Công nghệ Bưu chính Viễn thông, 96A, Trần Phú, Hà Đông, Hà Nội',
   isResultPublic: false,
 };
 
@@ -50,9 +50,9 @@ export const DEFAULT_SETTINGS: Omit<WebsiteSettings, SensitiveKey> = {
 // localStorage helpers — imagekit credentials stored in SEPARATE keys
 // ─────────────────────────────────────────────────────────────────────────────
 const LS_PUBLIC_SETTINGS = 'lcd_website_settings'; // safe public settings cache
-const LS_IK_PUBLIC    = 'lcd_ik_public_key';
-const LS_IK_PRIVATE   = 'lcd_ik_private_key';
-const LS_IK_ENDPOINT  = 'lcd_ik_url_endpoint';
+const LS_IK_PUBLIC = 'lcd_ik_public_key';
+const LS_IK_PRIVATE = 'lcd_ik_private_key';
+const LS_IK_ENDPOINT = 'lcd_ik_url_endpoint';
 
 export const settingsService = {
   // ───────────────────────────────────────────────────────────────────────────
@@ -104,7 +104,7 @@ export const settingsService = {
         const secretSnap = await getDoc(doc(db, 'system_settings', 'imagekit'));
         if (secretSnap.exists()) {
           const d = secretSnap.data();
-          if (d.publicKey)  imagekitPublicKey  = d.publicKey;
+          if (d.publicKey) imagekitPublicKey = d.publicKey;
           if (d.privateKey) imagekitPrivateKey = d.privateKey;
           if (d.urlEndpoint) imagekitUrlEndpoint = d.urlEndpoint;
         }
@@ -114,8 +114,8 @@ export const settingsService = {
     }
 
     // localStorage fallback for offline/demo mode
-    if (!imagekitPublicKey)   imagekitPublicKey  = localStorage.getItem(LS_IK_PUBLIC)    || '';
-    if (!imagekitPrivateKey)  imagekitPrivateKey = localStorage.getItem(LS_IK_PRIVATE)   || '';
+    if (!imagekitPublicKey) imagekitPublicKey = localStorage.getItem(LS_IK_PUBLIC) || '';
+    if (!imagekitPrivateKey) imagekitPrivateKey = localStorage.getItem(LS_IK_PRIVATE) || '';
     if (!imagekitUrlEndpoint) imagekitUrlEndpoint = localStorage.getItem(LS_IK_ENDPOINT) || '';
 
     return {
@@ -145,16 +145,16 @@ export const settingsService = {
     const hasIkUpdate = imagekitPublicKey !== undefined || imagekitPrivateKey !== undefined || imagekitUrlEndpoint !== undefined;
     if (hasIkUpdate) {
       // localStorage (offline/demo)
-      if (imagekitPublicKey   !== undefined) localStorage.setItem(LS_IK_PUBLIC,    imagekitPublicKey);
-      if (imagekitPrivateKey  !== undefined) localStorage.setItem(LS_IK_PRIVATE,   imagekitPrivateKey);
-      if (imagekitUrlEndpoint !== undefined) localStorage.setItem(LS_IK_ENDPOINT,  imagekitUrlEndpoint);
+      if (imagekitPublicKey !== undefined) localStorage.setItem(LS_IK_PUBLIC, imagekitPublicKey);
+      if (imagekitPrivateKey !== undefined) localStorage.setItem(LS_IK_PRIVATE, imagekitPrivateKey);
+      if (imagekitUrlEndpoint !== undefined) localStorage.setItem(LS_IK_ENDPOINT, imagekitUrlEndpoint);
 
       // Firestore protected collection (will fail silently if not admin)
       if (isFirebaseConfigured && db) {
         try {
           const ikPayload: Record<string, any> = { updatedAt: serverTimestamp() };
-          if (imagekitPublicKey   !== undefined) ikPayload.publicKey   = imagekitPublicKey;
-          if (imagekitPrivateKey  !== undefined) ikPayload.privateKey  = imagekitPrivateKey;
+          if (imagekitPublicKey !== undefined) ikPayload.publicKey = imagekitPublicKey;
+          if (imagekitPrivateKey !== undefined) ikPayload.privateKey = imagekitPrivateKey;
           if (imagekitUrlEndpoint !== undefined) ikPayload.urlEndpoint = imagekitUrlEndpoint;
           await setDoc(doc(db, 'system_settings', 'imagekit'), ikPayload, { merge: true });
         } catch (err) {
@@ -190,9 +190,9 @@ export const settingsService = {
     // Return full admin view for the UI to reflect saved values
     return {
       ...updatedPublic,
-      imagekitPublicKey:   imagekitPublicKey   ?? localStorage.getItem(LS_IK_PUBLIC)    ?? '',
-      imagekitPrivateKey:  imagekitPrivateKey  ?? localStorage.getItem(LS_IK_PRIVATE)   ?? '',
-      imagekitUrlEndpoint: imagekitUrlEndpoint ?? localStorage.getItem(LS_IK_ENDPOINT)  ?? '',
+      imagekitPublicKey: imagekitPublicKey ?? localStorage.getItem(LS_IK_PUBLIC) ?? '',
+      imagekitPrivateKey: imagekitPrivateKey ?? localStorage.getItem(LS_IK_PRIVATE) ?? '',
+      imagekitUrlEndpoint: imagekitUrlEndpoint ?? localStorage.getItem(LS_IK_ENDPOINT) ?? '',
     } as WebsiteSettings;
   },
 
