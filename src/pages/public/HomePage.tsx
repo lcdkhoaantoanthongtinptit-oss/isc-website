@@ -709,7 +709,7 @@ export const HomePage: React.FC = () => {
                         <h4 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 4px', color: '#0f172a' }}>
                           {displayName}
                         </h4>
-                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                        {/* <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
                           {displayCohort && (
                             <span
                               style={{
@@ -730,7 +730,7 @@ export const HomePage: React.FC = () => {
                               {mem.className}
                             </span>
                           )}
-                        </div>
+                        </div> */}
                       </>
                     );
                   })()}
