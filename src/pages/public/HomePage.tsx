@@ -309,7 +309,7 @@ export const HomePage: React.FC = () => {
               </h2>
               <p style={{ color: '#475569', fontSize: '1.02rem', lineHeight: 1.7, marginBottom: '24px' }}>
                 {settings?.aboutDescription ||
-                  'Liên chi đoàn Khoa An toàn thông tin (ISC - Information Security Council) được thành lập năm 2025, đánh dấu bước ngoặt khi tách ra từ Liên chi CNTT 1. ISC hướng tới trở thành một tổ chức Đoàn Thanh niên tiên phong, một mái nhà chung dành cho những sinh viên có niềm đam mê với ngành An toàn thông tin.'}
+                  'Liên chi đoàn Khoa An toàn thông tin (ISC - Information Security Council) được thành lập năm 2025, đánh dấu bước ngoặt khi tách ra từ Liên chi CNTT. ISC hướng tới trở thành một tổ chức Đoàn Thanh niên tiên phong, một mái nhà chung dành cho những sinh viên có niềm đam mê với ngành An toàn thông tin.'}
               </p>
 
               {/* Vision & Mission Cards */}
@@ -784,7 +784,7 @@ export const HomePage: React.FC = () => {
                 }}
               >
                 <Sparkles size={16} />
-                <span>{settings?.recruitmentPeriod || 'TUYỂN THÀNH VIÊN GEN 2.0 (23/08 - 10/09)'}</span>
+                <span>{settings?.recruitmentPeriod || 'TUYỂN THÀNH VIÊN GEN 2.0 (21/8 - 11/09)'}</span>
               </div>
               <h2
                 style={{
@@ -907,6 +907,19 @@ export const HomePage: React.FC = () => {
                     <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>FANPAGE FACEBOOK</div>
                     <a href={settings?.facebook || 'https://facebook.com'} target="_blank" rel="noreferrer" style={{ fontWeight: 600, color: '#0284c7', textDecoration: 'none' }}>
                       Liên chi đoàn Khoa An toàn thông tin <ExternalLink size={12} style={{ display: 'inline' }} />
+                    </a>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                  <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#fce4ec', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e91e63' }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.67a8.17 8.17 0 0 0 4.78 1.52V6.72a4.85 4.85 0 0 1-1.01-.03z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>TIKTOK</div>
+                    <a href="https://www.tiktok.com/@lcdattt.ptit" target="_blank" rel="noreferrer" style={{ fontWeight: 600, color: '#e91e63', textDecoration: 'none' }}>
+                      @lcdattt.ptit <ExternalLink size={12} style={{ display: 'inline' }} />
                     </a>
                   </div>
                 </div>
