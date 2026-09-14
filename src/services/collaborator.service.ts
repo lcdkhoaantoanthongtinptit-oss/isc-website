@@ -55,17 +55,14 @@ export const collaboratorService = {
       return { found: false };
     }
 
-    // Gate: check if admin has enabled public result lookup
+    // Defense-in-depth gate: even if page-level check was bypassed, service
+    // blocks lookup when admin hasn't opened results.
     try {
       const settings = await settingsService.getSettings();
       if (!settings.isResultPublic) {
-        return {
-          found: false,
-          _blocked: true,
-        } as any;
+        return { found: false };
       }
     } catch {
-      // If settings fetch fails, default to blocking for safety
       return { found: false };
     }
 
