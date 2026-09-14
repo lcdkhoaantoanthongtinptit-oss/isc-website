@@ -266,3 +266,5 @@ firebase deploy
 ### 8.4. Cài đặt Landing Page (`/admin/settings`)
 - Thay đổi thông điệp Hero, Slogan, số liệu thống kê sinh viên, thông tin liên hệ ngay trên giao diện quản trị mà không cần sửa code.
 - Nút tiện ích **Nạp dữ liệu mẫu (Seed Data)** giúp khởi tạo toàn bộ database mẫu vào Firestore chỉ với 1 click.
+#   i s c - w e b s i t e  
+ 
