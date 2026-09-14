@@ -18,7 +18,7 @@ import {
 import { Plus, Edit2, Trash2, UploadCloud, Calendar, UserCheck } from 'lucide-react';
 import type { ColumnsType } from 'antd/es/table';
 import { memberService } from '../../services/member.service';
-import { storageService } from '../../services/storage.service';
+import { storageService, formatFileSize } from '../../services/storage.service';
 import { ExecutiveMember } from '../../types';
 
 export const ExecutiveMembersPage: React.FC = () => {
@@ -113,9 +113,15 @@ export const ExecutiveMembersPage: React.FC = () => {
   const handleUploadAvatar = async (file: File) => {
     try {
       setUploading(true);
-      const url = await storageService.uploadImage(`executive-members/${Date.now()}_${file.name}`, file);
-      setAvatarUrl(url);
-      message.success('Tải ảnh đại diện thành công!');
+      const res = await storageService.uploadImageWithDetails(`executive-members/${Date.now()}_${file.name}`, file);
+      setAvatarUrl(res.url);
+      if (res.compression && res.compression.isCompressed) {
+        message.success(
+          `Tải ảnh thành công! Đã tối ưu nén ${formatFileSize(res.compression.originalSize)} ➔ ${formatFileSize(res.compression.compressedSize)} (giảm ${res.compression.savedPercent}%)`
+        );
+      } else {
+        message.success('Tải ảnh đại diện thành công!');
+      }
     } catch (err: any) {
       message.error(err.message || 'Lỗi upload ảnh.');
     } finally {

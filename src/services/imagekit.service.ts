@@ -53,6 +53,8 @@ function generateToken(): string {
   return 'ik_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
 }
 
+import { compressImage } from '../utils/imageCompressor';
+
 export const imagekitService = {
   /**
    * Get active ImageKit credentials from env vars or localStorage
@@ -104,9 +106,19 @@ export const imagekitService = {
       tags?: string[];
     } = {}
   ): Promise<ImageKitUploadResponse> {
+    // 1. Automatic high-efficiency browser compression (WebP, optimal resolution)
+    const isAvatar = options.folder?.includes('executive-members') || options.folder?.includes('avatar');
+    const compression = await compressImage(file, {
+      maxWidth: isAvatar ? 800 : 1920,
+      maxHeight: isAvatar ? 800 : 1080,
+      quality: isAvatar ? 0.85 : 0.82,
+      targetFormat: 'image/webp',
+    });
+    const finalFile = compression.file;
+
     const cleanFileName =
       options.fileName ||
-      file.name
+      finalFile.name
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -116,7 +128,7 @@ export const imagekitService = {
     // Strategy 1: Try serverless endpoint (/api/upload) if available
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', finalFile);
       formData.append('fileName', cleanFileName);
       formData.append('folder', folderPath);
       if (options.tags && options.tags.length > 0) {
@@ -151,7 +163,7 @@ export const imagekitService = {
     const signature = await generateHmacSha1(config.privateKey, token + expire);
 
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', finalFile);
     formData.append('fileName', cleanFileName);
     formData.append('publicKey', config.publicKey);
     formData.append('signature', signature);

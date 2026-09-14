@@ -1,6 +1,7 @@
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage, isFirebaseConfigured } from './firebase';
 import { imagekitService, ImageKitUploadResponse } from './imagekit.service';
+import { compressImage, formatFileSize, CompressionResult } from '../utils/imageCompressor';
 
 export interface UploadOptions {
   maxSizeMB?: number;
@@ -8,7 +9,7 @@ export interface UploadOptions {
 }
 
 const DEFAULT_OPTIONS: UploadOptions = {
-  maxSizeMB: 10,
+  maxSizeMB: 15,
   allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'],
 };
 
@@ -23,7 +24,7 @@ export const storageService = {
       };
     }
     const sizeInMB = file.size / (1024 * 1024);
-    if (sizeInMB > (opts.maxSizeMB || 10)) {
+    if (sizeInMB > (opts.maxSizeMB || 15)) {
       return {
         valid: false,
         error: `Kích thước tệp vượt quá giới hạn cho phép (${sizeInMB.toFixed(2)}MB / tối đa ${opts.maxSizeMB}MB).`,
@@ -33,56 +34,76 @@ export const storageService = {
   },
 
   /**
-   * Upload image using ImageKit.io as priority service
+   * Upload image with auto-compression using ImageKit.io as priority service
    * Falls back to Firebase Storage or Base64 demo URL if ImageKit is not configured
    */
   async uploadImage(path: string, file: File): Promise<string> {
+    const result = await this.uploadImageWithDetails(path, file);
+    return result.url;
+  },
+
+  /**
+   * Upload image and return both the CDN URL and compression statistics
+   */
+  async uploadImageWithDetails(
+    path: string,
+    file: File
+  ): Promise<{ url: string; compression: CompressionResult }> {
     const validation = this.validateImageFile(file);
     if (!validation.valid) {
       throw new Error(validation.error);
     }
 
-    // 1. Try ImageKit.io first if configured
+    // 1. High-efficiency client compression (WebP / 82% quality / max 1920x1080)
+    const isAvatar = path.includes('executive-members') || path.includes('avatar');
+    const compression = await compressImage(file, {
+      maxWidth: isAvatar ? 800 : 1920,
+      maxHeight: isAvatar ? 800 : 1080,
+      quality: isAvatar ? 0.85 : 0.82,
+      targetFormat: 'image/webp',
+    });
+    const fileToUpload = compression.file;
+
+    // 2. Try ImageKit.io first if configured
     if (imagekitService.isConfigured()) {
       try {
         const folder = path.includes('/') ? `/${path.split('/')[0]}` : '/lcdattt';
-        const res: ImageKitUploadResponse = await imagekitService.uploadFile(file, { folder });
+        const res: ImageKitUploadResponse = await imagekitService.uploadFile(fileToUpload, { folder });
         if (res && res.url) {
-          return res.url;
+          return { url: res.url, compression };
         }
       } catch (err: any) {
         console.warn('[Storage] ImageKit upload error, attempting fallback:', err);
-        // If ImageKit specifically failed due to bad keys, rethrow or try Firebase if available
         if (!isFirebaseConfigured && !storage) {
           throw new Error(`Lỗi tải ảnh lên ImageKit: ${err.message || err}`);
         }
       }
     }
 
-    // 2. Fallback to Firebase Storage if configured
+    // 3. Fallback to Firebase Storage if configured
     if (isFirebaseConfigured && storage) {
       try {
         const storageRef = ref(storage, path);
-        const snapshot = await uploadBytes(storageRef, file, {
-          contentType: file.type,
+        const snapshot = await uploadBytes(storageRef, fileToUpload, {
+          contentType: fileToUpload.type,
         });
         const downloadUrl = await getDownloadURL(snapshot.ref);
-        return downloadUrl;
+        return { url: downloadUrl, compression };
       } catch (err: any) {
         console.warn('[Storage] Firebase Storage upload error, falling back to local data URL:', err);
       }
     }
 
-    // 3. Local/Demo fallback: Base64 Data URL
+    // 4. Local/Demo fallback: Base64 Data URL
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
-        resolve(reader.result as string);
+        resolve({ url: reader.result as string, compression });
       };
       reader.onerror = (err) => reject(err);
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(fileToUpload);
     });
   },
 };
 
-export { imagekitService };
+export { imagekitService, compressImage, formatFileSize };

@@ -18,7 +18,7 @@ import {
 import { Plus, Edit2, Trash2, UploadCloud, Calendar, Clock } from 'lucide-react';
 import type { ColumnsType } from 'antd/es/table';
 import { activityService } from '../../services/activity.service';
-import { storageService } from '../../services/storage.service';
+import { storageService, formatFileSize } from '../../services/storage.service';
 import { Activity } from '../../types';
 import dayjs from 'dayjs';
 
@@ -104,9 +104,15 @@ export const ActivitiesAdminPage: React.FC = () => {
   const handleUploadImage = async (file: File) => {
     try {
       setUploading(true);
-      const url = await storageService.uploadImage(`activities/${Date.now()}_${file.name}`, file);
-      setThumbnailUrl(url);
-      message.success('Tải ảnh đại diện thành công!');
+      const res = await storageService.uploadImageWithDetails(`activities/${Date.now()}_${file.name}`, file);
+      setThumbnailUrl(res.url);
+      if (res.compression && res.compression.isCompressed) {
+        message.success(
+          `Tải ảnh thành công! Đã tối ưu nén ${formatFileSize(res.compression.originalSize)} ➔ ${formatFileSize(res.compression.compressedSize)} (giảm ${res.compression.savedPercent}%)`
+        );
+      } else {
+        message.success('Tải ảnh đại diện thành công!');
+      }
     } catch (err: any) {
       message.error(err.message || 'Lỗi khi tải ảnh.');
     } finally {
