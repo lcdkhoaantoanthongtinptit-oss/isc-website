@@ -1,0 +1,73 @@
+# ====================================================================
+# 1. Environment & Secrets (Bảo mật & Biến môi trường)
+# ====================================================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+*.cert
+serviceAccountKey*.json
+*-adminsdk-*.json
+google-services.json
+# Giữ lại file cấu hình mẫu không chứa secret
+!.env.example
+
+# ====================================================================
+# 2. Firebase Rules & Internal Configs (Quy tắc bảo mật nội bộ)
+# ====================================================================
+firestore.rules
+storage.rules
+firestore.indexes.json
+.firebaserc
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
+# ====================================================================
+# 3. Data & Spreadsheets (Dữ liệu ứng viên, file Excel cá nhân)
+# ====================================================================
+*.xlsx
+*.xls
+*.csv
+# Không commit dữ liệu CTV tải về máy
+Danh_sach_*.xlsx
+Template_*.xlsx
+
+# ====================================================================
+# 4. Dependencies & Build Artifacts (Thư viện & Build)
+# ====================================================================
+node_modules/
+dist/
+dist-ssr/
+functions/node_modules/
+functions/lib/
+*.tsbuildinfo
+
+# ====================================================================
+# 5. Logs & Debug
+# ====================================================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ====================================================================
+# 6. Editor & Operating System (Hệ điều hành & Trình soạn thảo)
+# ====================================================================
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

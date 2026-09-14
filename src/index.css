@@ -1,0 +1,195 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+
+:root {
+  --primary: #0284c7;
+  --primary-hover: #0369a1;
+  --primary-light: #e0f2fe;
+  --secondary: #06b6d4;
+  --accent: #3b82f6;
+  --dark: #0f172a;
+  --slate-600: #475569;
+  --slate-500: #64748b;
+  --slate-400: #94a3b8;
+  --slate-100: #f1f5f9;
+  --slate-50: #f8fafc;
+  --border-color: #e2e8f0;
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--dark);
+  background-color: #fcfdfe;
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  color: var(--dark);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+/* Clean Solid Background */
+.cyber-bg-pattern {
+  background-color: #f8fafc;
+}
+
+.hero-glow-bg {
+  display: none;
+}
+
+.hero-glow-left {
+  display: none;
+}
+
+/* Solid Brand Text */
+.gradient-text {
+  color: #0284c7;
+}
+
+.gradient-text-cyan {
+  color: #0284c7;
+}
+
+/* Glassmorphism Classes */
+.glass-nav {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: none !important;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px -8px rgba(2, 132, 199, 0.12), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
+  border: none !important;
+}
+
+/* Global Cards without border */
+.ant-card {
+  border: none !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.ant-card-bordered {
+  border: none !important;
+}
+
+.ant-tag {
+  border: none !important;
+}
+
+.ant-modal-content {
+  border: none !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.18) !important;
+}
+
+.ant-input-affix-wrapper,
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused,
+.ant-input:focus,
+.ant-input-affix-wrapper:hover {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Cyber Badge & Pill */
+.cyber-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(2, 132, 199, 0.08);
+  color: #0284c7;
+  border: none !important;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.cyber-badge-dot {
+  width: 8px;
+  height: 8px;
+  background: #0284c7;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #0284c7;
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(2, 132, 199, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(2, 132, 199, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(2, 132, 199, 0); }
+}
+
+/* Layout Utilities */
+.container-custom {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Admin Sider Scrollbar & Sticky */
+.admin-sider-desktop {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
+}
+
+.admin-sider-desktop::-webkit-scrollbar {
+  width: 4px;
+}
+
+.admin-sider-desktop::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-sider-desktop::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
