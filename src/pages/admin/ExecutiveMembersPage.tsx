@@ -17,6 +17,7 @@ import {
 } from 'antd';
 import { Plus, Edit2, Trash2, UploadCloud, Calendar, UserCheck } from 'lucide-react';
 import type { ColumnsType } from 'antd/es/table';
+import ImgCrop from 'antd-img-crop';
 import { memberService } from '../../services/member.service';
 import { storageService, formatFileSize } from '../../services/storage.service';
 import { ExecutiveMember } from '../../types';
@@ -400,7 +401,7 @@ export const ExecutiveMembersPage: React.FC = () => {
             </Row>
           </div>
 
-          {/* Section 2: Nhiệm kỳ công tác (Điền năm) */}
+          {/* Section 2: Nhiệm kỳ công tác */}
           <div
             style={{
               padding: '18px',
@@ -413,7 +414,7 @@ export const ExecutiveMembersPage: React.FC = () => {
           >
             <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0369a1', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Calendar size={16} color="#0284c7" />
-              <span>Nhiệm kỳ công tác (Điền năm)</span>
+              <span>Nhiệm kỳ công tác</span>
             </div>
 
             <Row gutter={16}>
@@ -437,30 +438,33 @@ export const ExecutiveMembersPage: React.FC = () => {
                 </Form.Item>
               </Col>
             </Row>
-
-            {/* Live preview tag */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
-              <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#64748b' }}>
-                Hiển thị:
-              </span>
-              <Tag color="blue" style={{ fontWeight: 700, fontSize: '0.88rem', padding: '2px 10px' }}>
-                Nhiệm kỳ {watchStartYear || 2026} - {watchEndYear || 2027}
-              </Tag>
-            </div>
           </div>
 
           {/* Section 3: Ảnh đại diện & Liên hệ */}
           <Form.Item label="Ảnh đại diện (Avatar)" required>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <Upload
-                accept="image/*"
-                showUploadList={false}
-                beforeUpload={handleUploadAvatar}
+              <ImgCrop
+                rotationSlider
+                aspect={1}
+                cropShape="round"
+                showGrid
+                quality={1}
+                modalTitle="Cắt & Điều chỉnh ảnh đại diện BCH"
+                modalOk="Cắt & Tải lên"
+                modalCancel="Hủy"
+                resetText="Đặt lại"
+                showReset
               >
-                <Button icon={<UploadCloud size={16} />} loading={uploading}>
-                  Tải ảnh avatar
-                </Button>
-              </Upload>
+                <Upload
+                  accept="image/*"
+                  showUploadList={false}
+                  beforeUpload={handleUploadAvatar}
+                >
+                  <Button icon={<UploadCloud size={16} />} loading={uploading}>
+                    Tải ảnh avatar
+                  </Button>
+                </Upload>
+              </ImgCrop>
               <Input
                 placeholder="Hoặc dán URL ảnh trực tiếp"
                 value={avatarUrl}

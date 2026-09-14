@@ -12,6 +12,7 @@
   "dependencies": {
     "@ant-design/icons": "^6.3.4",
     "antd": "^6.6.4",
+    "antd-img-crop": "^4.30.0",
     "canvas-confetti": "^1.9.4",
     "chart.js": "^4.5.1",
     "dayjs": "^1.11.23",
