@@ -149,7 +149,7 @@ export const CheckResultPage: React.FC = () => {
                 borderRadius: '24px',
                 padding: '48px 36px',
                 textAlign: 'center',
-                boxShadow: '0 20px 60px rgba(127,29,29,0.35)',
+                boxShadow: '0 20px 60px rgba(2,132,199,0.35)',
                 position: 'relative',
                 overflow: 'hidden',
               }}
@@ -163,7 +163,7 @@ export const CheckResultPage: React.FC = () => {
               <div style={{
                 position: 'absolute', bottom: '-30px', left: '-30px',
                 width: '120px', height: '120px', borderRadius: '50%',
-                background: 'rgba(99,102,241,0.07)', pointerEvents: 'none',
+                background: 'rgba(56,189,248,0.10)', pointerEvents: 'none',
               }} />
               <h2 style={{ color: '#ffffff', fontWeight: 800, fontSize: '1.6rem', margin: '0 0 12px' }}>
                 Kết quả chưa được công bố
@@ -193,7 +193,7 @@ export const CheckResultPage: React.FC = () => {
                 <Bell size={18} /> Theo dõi fanpage để nhận thông báo
               </a>
 
-              <p style={{ color: '#475569', fontSize: '0.82rem', margin: 0 }}>
+              <p style={{ color: '#7dd3fc', fontSize: '0.82rem', margin: 0 }}>
                 Liên chi đoàn Khoa An toàn thông tin — ISC PTIT
               </p>
             </div>
