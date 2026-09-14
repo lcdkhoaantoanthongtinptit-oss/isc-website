@@ -46,7 +46,7 @@ export const CheckResultPage: React.FC = () => {
         zIndex: 100005,
       });
       setTimeout(() => {
-        confetti({ particleCount: 60, angle: 60,  spread: 65, origin: { x: 0, y: 0.6 }, zIndex: 100005 });
+        confetti({ particleCount: 60, angle: 60, spread: 65, origin: { x: 0, y: 0.6 }, zIndex: 100005 });
         confetti({ particleCount: 60, angle: 120, spread: 65, origin: { x: 1, y: 0.6 }, zIndex: 100005 });
       }, 200);
     } catch {
@@ -165,33 +165,6 @@ export const CheckResultPage: React.FC = () => {
                 width: '120px', height: '120px', borderRadius: '50%',
                 background: 'rgba(99,102,241,0.07)', pointerEvents: 'none',
               }} />
-
-              {/* Lock icon */}
-              <div style={{
-                width: '80px', height: '80px', borderRadius: '50%',
-                background: 'rgba(255,255,255,0.08)',
-                border: '2px solid rgba(255,255,255,0.12)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                margin: '0 auto 24px',
-              }}>
-                <Lock size={36} color="#38bdf8" />
-              </div>
-
-              <div style={{
-                display: 'inline-block',
-                background: 'rgba(56,189,248,0.15)',
-                border: '1px solid rgba(56,189,248,0.3)',
-                color: '#38bdf8',
-                fontWeight: 700,
-                fontSize: '0.75rem',
-                letterSpacing: '0.1em',
-                padding: '4px 14px',
-                borderRadius: '9999px',
-                marginBottom: '16px',
-              }}>
-                CHƯA MỞ CỬA
-              </div>
-
               <h2 style={{ color: '#ffffff', fontWeight: 800, fontSize: '1.6rem', margin: '0 0 12px' }}>
                 Kết quả chưa được công bố
               </h2>

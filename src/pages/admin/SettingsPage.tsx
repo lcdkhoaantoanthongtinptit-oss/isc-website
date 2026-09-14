@@ -31,8 +31,8 @@ export const SettingsPage: React.FC = () => {
       await settingsService.updateSettings({ isResultPublic });
       message.success(
         isResultPublic
-          ? '✅ Đã mở cổng tra cứu kết quả. Ứng viên CTV có thể tra cứu ngay.'
-          : '🔒 Đã đóng cổng tra cứu kết quả.'
+          ? 'Đã mở cổng tra cứu kết quả. Ứng viên CTV có thể tra cứu ngay.'
+          : 'Đã đóng cổng tra cứu kết quả.'
       );
     } catch (err: any) {
       message.error('Lỗi khi lưu cài đặt: ' + err.message);
