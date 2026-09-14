@@ -31,6 +31,7 @@ import { settingsService } from '../../services/settings.service';
 import { Activity, ExecutiveMember, Department, WebsiteSettings } from '../../types';
 import dayjs from 'dayjs';
 import logoImg from '../../assets/logo.png';
+import heroImg from '../../assets/hero.jpg';
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -388,7 +389,7 @@ export const HomePage: React.FC = () => {
                 }}
               >
                 <img
-                  src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1000&q=80"
+                  src={heroImg}
                   alt="Liên chi đoàn Khoa ATTT"
                   style={{ width: '100%', height: '420px', objectFit: 'cover', display: 'block' }}
                 />
