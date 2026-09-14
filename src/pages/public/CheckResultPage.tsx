@@ -145,7 +145,7 @@ export const CheckResultPage: React.FC = () => {
           <div style={{ maxWidth: '560px', margin: '0 auto' }}>
             <div
               style={{
-                background: 'linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #b91c1c 100%)',
+                background: 'linear-gradient(135deg, #201d7fff 0%, #1f1b99ff 50%, #1c55b9ff 100%)',
                 borderRadius: '24px',
                 padding: '48px 36px',
                 textAlign: 'center',
@@ -312,7 +312,7 @@ export const CheckResultPage: React.FC = () => {
             {/* CASE 3: FAILED */}
             {result.found && result.status === 'FAILED' && (
               <div style={{ padding: '40px 32px', textAlign: 'center', backgroundColor: '#ffffff' }}>
-                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#f1f5f9', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
+                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#f1f5f9', color: '#b95748ff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
                   <XCircle size={34} />
                 </div>
                 <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>Thông báo kết quả ứng tuyển</h3>
