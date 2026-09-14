@@ -26,6 +26,7 @@ export const CheckResultPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PublicCollaboratorResult | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
 
   const triggerConfetti = () => {
     // Elegant dual celebration confetti with high zIndex to appear in front of Modal
@@ -66,6 +67,15 @@ export const CheckResultPage: React.FC = () => {
     try {
       setLoading(true);
       const res = await collaboratorService.checkCollaboratorResult(cleanId);
+
+      // Check if result lookup is blocked by admin
+      if ((res as any)._blocked) {
+        setIsBlocked(true);
+        setIsModalOpen(true);
+        return;
+      }
+
+      setIsBlocked(false);
       setResult(res);
       setIsModalOpen(true);
 
@@ -160,7 +170,7 @@ export const CheckResultPage: React.FC = () => {
           </div>
           <div className="cyber-badge" style={{ marginBottom: '14px', border: 'none' }}>
             <ShieldCheck size={16} />
-            <span>TUYỂN CỘNG TÁC VIÊN GEN 2.0 • KẾT QUẢ VÒNG CV</span>
+            <span>TUYỂN CỘNG TÁC VIÊN GEN 2.0</span>
           </div>
           <h1
             style={{
@@ -171,7 +181,7 @@ export const CheckResultPage: React.FC = () => {
               marginBottom: '14px',
             }}
           >
-            Tra cứu kết quả Vòng CV
+            Tra cứu kết quả
           </h1>
 
         </div>
@@ -265,8 +275,46 @@ export const CheckResultPage: React.FC = () => {
       >
         {result && (
           <div>
+                    {/* CASE BLOCKED: Result lookup not yet open */}
+            {isBlocked && (
+              <div style={{ padding: '40px 32px', textAlign: 'center', backgroundColor: '#ffffff' }}>
+                <div
+                  style={{
+                    width: '72px',
+                    height: '72px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #e0f2fe, #bfdbfe)',
+                    color: '#0284c7',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 20px',
+                    fontSize: '2rem',
+                  }}
+                >
+                  🔒
+                </div>
+                <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>
+                  Cổng tra cứu chưa mở
+                </h3>
+                <p style={{ color: '#64748b', fontSize: '1rem', lineHeight: 1.7, maxWidth: '460px', margin: '0 auto 8px' }}>
+                  Ban quản trị chưa công bố kết quả tuyển CTV đợt này.
+                </p>
+                <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.6, maxWidth: '420px', margin: '0 auto 24px' }}>
+                  Vui lòng theo dõi fanpage chính thức của Liên chi đoàn Khoa An toàn thông tin để nhận thông báo khi kết quả được công bố.
+                </p>
+                <Button
+                  type="primary"
+                  style={{ background: '#0284c7', fontWeight: 600, height: '42px', padding: '0 28px' }}
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  Đã hiểu
+                </Button>
+              </div>
+            )}
+
             {/* CASE 1: NOT FOUND */}
-            {!result.found && (
+            {!isBlocked && !result?.found && (
               <div style={{ padding: '40px 32px', textAlign: 'center', backgroundColor: '#ffffff' }}>
                 <div
                   style={{
@@ -311,7 +359,7 @@ export const CheckResultPage: React.FC = () => {
             )}
 
             {/* CASE 2: PENDING */}
-            {result.found && result.status === 'PENDING' && (
+            {!isBlocked && result?.found && result.status === 'PENDING' && (
               <div style={{ padding: '40px 32px', textAlign: 'center', backgroundColor: '#ffffff' }}>
                 <div
                   style={{
@@ -367,7 +415,7 @@ export const CheckResultPage: React.FC = () => {
             )}
 
             {/* CASE 3: FAILED */}
-            {result.found && result.status === 'FAILED' && (
+            {!isBlocked && result?.found && result.status === 'FAILED' && (
               <div style={{ padding: '40px 32px', textAlign: 'center', backgroundColor: '#ffffff' }}>
                 <div
                   style={{

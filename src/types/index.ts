@@ -125,6 +125,8 @@ export interface WebsiteSettings {
   imagekitPublicKey?: string;
   imagekitPrivateKey?: string;
   imagekitUrlEndpoint?: string;
+  /** Khi true, ứng viên CTV có thể tra cứu kết quả qua /tra-cuu-ctv */
+  isResultPublic?: boolean;
   updatedAt?: string | Timestamp | Date;
 }
 

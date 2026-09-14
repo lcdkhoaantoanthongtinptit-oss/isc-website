@@ -57,34 +57,15 @@ import { compressImage } from '../utils/imageCompressor';
 
 export const imagekitService = {
   /**
-   * Get active ImageKit credentials from env vars or localStorage
+   * Get active ImageKit credentials.
+   * Source priority: env vars > lcd_ik_* localStorage (set by Admin Settings page)
+   * NEVER reads from lcd_website_settings (public cache).
    */
   getConfig(): ImageKitConfig {
-    const pub = import.meta.env.VITE_IMAGEKIT_PUBLIC_KEY || '';
-    const priv = import.meta.env.VITE_IMAGEKIT_PRIVATE_KEY || '';
-    const url = import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT || '';
-
-    // Check localStorage fallback in case Admin configured it via Settings Page
-    const localSettings = localStorage.getItem('lcd_website_settings_data');
-    let localPub = '';
-    let localPriv = '';
-    let localUrl = '';
-    if (localSettings) {
-      try {
-        const parsed = JSON.parse(localSettings);
-        localPub = parsed.imagekitPublicKey || '';
-        localPriv = parsed.imagekitPrivateKey || '';
-        localUrl = parsed.imagekitUrlEndpoint || '';
-      } catch {
-        // ignore
-      }
-    }
-
-    return {
-      publicKey: pub || localPub,
-      privateKey: priv || localPriv,
-      urlEndpoint: url || localUrl,
-    };
+    const pub   = import.meta.env.VITE_IMAGEKIT_PUBLIC_KEY    || localStorage.getItem('lcd_ik_public_key')    || '';
+    const priv  = import.meta.env.VITE_IMAGEKIT_PRIVATE_KEY   || localStorage.getItem('lcd_ik_private_key')   || '';
+    const url   = import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT  || localStorage.getItem('lcd_ik_url_endpoint')  || '';
+    return { publicKey: pub, privateKey: priv, urlEndpoint: url };
   },
 
   /**

@@ -65,6 +65,7 @@ export const ROLE_PERMISSIONS: Record<
       '/admin/collaborators',
       '/admin/activities',
       '/admin/executive-members',
+      '/admin/settings',
     ],
   },
   recruiter: {

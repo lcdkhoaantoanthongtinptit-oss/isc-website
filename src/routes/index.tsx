@@ -45,8 +45,8 @@ export const AppRoutes: React.FC = () => {
           <Route path="collaborators" element={<CollaboratorsPage />} />
           <Route path="activities" element={<ActivitiesAdminPage />} />
           <Route path="executive-members" element={<ExecutiveMembersPage />} />
-          {/* Tạm thời ẩn chức năng Quản lý nội dung website theo yêu cầu */}
-          <Route path="settings" element={<Navigate to="/admin/dashboard" replace />} />
+          {/* Cài đặt website & Công khai kết quả */}
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Route>
 

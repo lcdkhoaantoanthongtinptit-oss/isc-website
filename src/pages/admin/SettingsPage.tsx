@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Form, Input, InputNumber, Button, Card, message, Spin, Row, Col, Tabs } from 'antd';
+import { Form, Input, InputNumber, Button, Card, message, Spin, Row, Col, Tabs, Switch, Alert } from 'antd';
 import {
   Save,
   ShieldCheck,
@@ -14,6 +14,9 @@ import {
   Layers,
   Flame,
   UploadCloud,
+  Eye,
+  Lock,
+  Globe,
 } from 'lucide-react';
 import { settingsService } from '../../services/settings.service';
 import { WebsiteSettings } from '../../types';
@@ -21,14 +24,18 @@ import { WebsiteSettings } from '../../types';
 export const SettingsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isResultPublic, setIsResultPublic] = useState(false);
   const [form] = Form.useForm();
 
   useEffect(() => {
     async function loadSettings() {
       try {
         setLoading(true);
+        // Auto-purge any imagekit keys that may have leaked into the public Firestore doc
+        settingsService.purgeLeakedKeysFromPublicDoc().catch(() => {});
         const data = await settingsService.getAdminSettings();
         form.setFieldsValue(data);
+        setIsResultPublic(Boolean(data.isResultPublic));
       } catch (err) {
         message.error('Lỗi khi tải thông tin cấu hình website.');
       } finally {
@@ -41,7 +48,7 @@ export const SettingsPage: React.FC = () => {
   const handleSave = async (values: any) => {
     try {
       setSaving(true);
-      await settingsService.updateSettings(values);
+      await settingsService.updateSettings({ ...values, isResultPublic });
       message.success('Cập nhật cấu hình website thành công! Nội dung trang chủ đã được làm mới.');
     } catch (err: any) {
       message.error('Lỗi khi lưu cấu hình: ' + err.message);
@@ -338,7 +345,117 @@ export const SettingsPage: React.FC = () => {
       ),
     },
     {
-      key: '5',
+      key: '7',
+      label: (
+        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Globe size={16} /> Tra cứu & Công khai
+        </span>
+      ),
+      children: (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Toggle card */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '20px 24px',
+              borderRadius: '16px',
+              border: isResultPublic ? '2px solid #10b981' : '2px solid #e2e8f0',
+              background: isResultPublic
+                ? 'linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%)'
+                : '#f8fafc',
+              transition: 'all 0.3s ease',
+              boxShadow: isResultPublic ? '0 4px 16px rgba(16, 185, 129, 0.12)' : 'none',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div
+                style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '12px',
+                  background: isResultPublic
+                    ? 'linear-gradient(135deg, #10b981, #059669)'
+                    : 'linear-gradient(135deg, #94a3b8, #64748b)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  transition: 'all 0.3s ease',
+                  boxShadow: isResultPublic ? '0 4px 12px rgba(16, 185, 129, 0.35)' : 'none',
+                }}
+              >
+                {isResultPublic ? (
+                  <Eye size={22} color="#ffffff" />
+                ) : (
+                  <Lock size={22} color="#ffffff" />
+                )}
+              </div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '1rem', color: '#0f172a', marginBottom: '2px' }}>
+                  Công khai kết quả xét tuyển CTV
+                </div>
+                <div style={{ fontSize: '0.875rem', color: '#64748b' }}>
+                  {isResultPublic
+                    ? 'Ứng viên CTV đang có thể tra cứu kết quả tại /tra-cuu-ctv'
+                    : 'Cổng tra cứu đang đóng — ứng viên chưa xem được kết quả'}
+                </div>
+              </div>
+            </div>
+            <Switch
+              checked={isResultPublic}
+              onChange={(checked) => setIsResultPublic(checked)}
+              style={{
+                backgroundColor: isResultPublic ? '#10b981' : undefined,
+                minWidth: '52px',
+              }}
+              size="default"
+            />
+          </div>
+
+          {/* Status alert */}
+          {isResultPublic ? (
+            <Alert
+              type="success"
+              showIcon
+              message="Cổng tra cứu đang MỞ"
+              description="Ứng viên CTV có thể truy cập trang /tra-cuu-ctv và nhập MSSV để xem kết quả xét tuyển. Nhớ bấm 'Lưu thay đổi cài đặt' để cập nhật."
+              style={{ borderRadius: '12px' }}
+            />
+          ) : (
+            <Alert
+              type="info"
+              showIcon
+              message="Cổng tra cứu đang ĐÓNG"
+              description="Ứng viên CTV sẽ thấy thông báo 'Cổng tra cứu chưa mở' khi truy cập /tra-cuu-ctv. Bật toggle bên trên và bấm Lưu để công khai kết quả."
+              style={{ borderRadius: '12px' }}
+            />
+          )}
+
+          <div
+            style={{
+              padding: '16px 20px',
+              background: '#f0f9ff',
+              borderRadius: '12px',
+              border: '1px solid #bae6fd',
+              fontSize: '0.9rem',
+              color: '#0369a1',
+              lineHeight: 1.6,
+            }}
+          >
+            <strong>Lưu ý quan trọng:</strong>
+            <ul style={{ margin: '8px 0 0', paddingLeft: '20px' }}>
+              <li>Chỉ bật công khai kết quả khi đã hoàn tất xét duyệt và cập nhật trạng thái đầy đủ trong <strong>Quản lý CTV</strong>.</li>
+              <li>Ứng viên chỉ xem được kết quả cơ bản (Tên, MSSV, Ban đăng ký, Trạng thái). Số điện thoại, email và ghi chú nội bộ <strong>không bao giờ hiển thị</strong>.</li>
+              <li>Sau khi tuyển xong, nên tắt toggle này để đóng cổng tra cứu lại.</li>
+            </ul>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: '8',
       label: (
         <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <UploadCloud size={16} /> Lưu trữ ảnh (ImageKit.io)

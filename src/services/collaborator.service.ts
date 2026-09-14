@@ -14,6 +14,7 @@ import {
 import { httpsCallable } from 'firebase/functions';
 import { db, functions, isFirebaseConfigured } from './firebase';
 import { Collaborator, PublicCollaboratorResult } from '../types';
+import { settingsService } from './settings.service';
 
 const LOCAL_COLLABS_KEY = 'lcd_collaborators_data';
 
@@ -51,6 +52,20 @@ export const collaboratorService = {
   async checkCollaboratorResult(rawStudentId: string): Promise<PublicCollaboratorResult> {
     const studentId = rawStudentId.trim().toUpperCase();
     if (!studentId) {
+      return { found: false };
+    }
+
+    // Gate: check if admin has enabled public result lookup
+    try {
+      const settings = await settingsService.getSettings();
+      if (!settings.isResultPublic) {
+        return {
+          found: false,
+          _blocked: true,
+        } as any;
+      }
+    } catch {
+      // If settings fetch fails, default to blocking for safety
       return { found: false };
     }
 

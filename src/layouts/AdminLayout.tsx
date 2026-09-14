@@ -44,7 +44,7 @@ export const AdminLayout: React.FC = () => {
     }
   };
 
-  // Base navigation items (Website content settings temporarily removed)
+  // Base navigation items
   const allMenuItems = [
     {
       key: '/admin/dashboard',
@@ -66,12 +66,19 @@ export const AdminLayout: React.FC = () => {
       icon: <Award size={18} />,
       label: 'Ban Chấp hành',
     },
+    {
+      key: '/admin/settings',
+      icon: <Settings size={18} />,
+      label: 'Cài đặt',
+      adminOnly: true,
+    },
   ];
 
   // Filter menu items by user role permissions
-  const visibleMenuItems = allMenuItems.filter((item) =>
-    hasPathPermission(currentUser, item.key)
-  );
+  const visibleMenuItems = allMenuItems
+    .filter((item) => hasPathPermission(currentUser, item.key))
+    .filter((item) => !(item as any).adminOnly || currentUser?.role === 'admin')
+    .map(({ adminOnly: _, ...rest }) => rest as typeof allMenuItems[0]);
 
   const handleMenuClick = ({ key }: { key: string }) => {
     setMobileDrawer(false);
