@@ -4,9 +4,11 @@ import {
   onAuthStateChanged,
   User,
   IdTokenResult,
+  updateProfile,
+  updatePassword,
 } from 'firebase/auth';
 import { auth, isFirebaseConfigured, db } from './firebase';
-import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 import { AdminUser, AdminRole } from '../types';
 
 const LOCAL_ADMIN_KEY = 'lcd_admin_session';
@@ -31,6 +33,7 @@ export const ROLE_PERMISSIONS: Record<
       '/admin/executive-members',
       '/admin/accounts',
       '/admin/settings',
+      '/admin/profile',
     ],
   },
   secretary: {
@@ -44,6 +47,7 @@ export const ROLE_PERMISSIONS: Record<
       '/admin/executive-members',
       '/admin/accounts',
       '/admin/settings',
+      '/admin/profile',
     ],
   },
   deputy_secretary: {
@@ -56,6 +60,7 @@ export const ROLE_PERMISSIONS: Record<
       '/admin/activities',
       '/admin/executive-members',
       '/admin/accounts',
+      '/admin/profile',
     ],
   },
   lead: {
@@ -67,6 +72,7 @@ export const ROLE_PERMISSIONS: Record<
       '/admin/interview',
       '/admin/activities',
       '/admin/executive-members',
+      '/admin/profile',
     ],
   },
   deputy_lead: {
@@ -78,6 +84,7 @@ export const ROLE_PERMISSIONS: Record<
       '/admin/interview',
       '/admin/activities',
       '/admin/executive-members',
+      '/admin/profile',
     ],
   },
   interviewer: {
@@ -265,7 +272,17 @@ export const authService = {
               user.displayName ||
               email.split('@')[0] ||
               'Cán bộ LCĐ',
+            photoURL: userDocData.photoURL || userDocData.avatarUrl || user.photoURL || null,
+            avatarUrl: userDocData.avatarUrl || userDocData.photoURL || user.photoURL || null,
+            phone: userDocData.phone || null,
+            studentId: userDocData.studentId || null,
+            className: userDocData.className || null,
+            cohort: userDocData.cohort || null,
+            bio: userDocData.bio || null,
+            facebookUrl: userDocData.facebookUrl || null,
             role: validRole,
+            position: userDocData.position || null,
+            linkedMemberId: userDocData.linkedMemberId || null,
             departmentId: userDocData.departmentId || null,
             departmentName: userDocData.departmentName || null,
             permissions:
@@ -279,6 +296,7 @@ export const authService = {
           const autoData = {
             email: user.email,
             displayName: user.displayName || email.split('@')[0] || 'Quản trị viên',
+            photoURL: user.photoURL || null,
             role: 'admin',
             createdAt: new Date().toISOString(),
           };
@@ -293,6 +311,8 @@ export const authService = {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName || email.split('@')[0] || 'Quản trị viên LCĐ',
+        photoURL: user.photoURL || null,
+        avatarUrl: user.photoURL || null,
         role: 'admin',
         permissions: ROLE_PERMISSIONS['admin'].allowedPaths,
       };
@@ -302,10 +322,106 @@ export const authService = {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName || user.email || 'Quản trị viên LCĐ',
+        photoURL: user.photoURL || null,
+        avatarUrl: user.photoURL || null,
         role: 'admin',
         permissions: ROLE_PERMISSIONS['admin'].allowedPaths,
       };
     }
+  },
+
+  // Update current logged-in user profile
+  async updateCurrentUserProfile(data: {
+    displayName?: string;
+    photoURL?: string | null;
+    phone?: string | null;
+    studentId?: string | null;
+    className?: string | null;
+    cohort?: string | null;
+    bio?: string | null;
+    facebookUrl?: string | null;
+    position?: string | null;
+    linkedMemberId?: string | null;
+    newPassword?: string;
+  }): Promise<AdminUser> {
+    const currentUser = await this.getCurrentUser();
+    if (!currentUser) {
+      throw new Error('Bạn chưa đăng nhập hoặc phiên làm việc đã hết hạn.');
+    }
+
+    // 1. Update Firebase Auth Profile & Password if Firebase is configured
+    if (isFirebaseConfigured && auth && auth.currentUser) {
+      const fbUser = auth.currentUser;
+      const profileUpdates: { displayName?: string; photoURL?: string | null } = {};
+      if (data.displayName !== undefined) profileUpdates.displayName = data.displayName;
+      if (data.photoURL !== undefined) profileUpdates.photoURL = data.photoURL;
+
+      if (Object.keys(profileUpdates).length > 0) {
+        await updateProfile(fbUser, profileUpdates);
+      }
+
+      if (data.newPassword && data.newPassword.trim()) {
+        try {
+          await updatePassword(fbUser, data.newPassword.trim());
+        } catch (pwErr: any) {
+          console.error('Error updating password:', pwErr);
+          if (pwErr.code === 'auth/requires-recent-login') {
+            throw new Error(
+              'Để đổi mật khẩu, bạn cần đăng xuất và đăng nhập lại gần đây nhằm xác thực bảo mật.'
+            );
+          } else if (pwErr.code === 'auth/weak-password') {
+            throw new Error('Mật khẩu mới quá yếu. Vui lòng nhập tối thiểu 6 ký tự.');
+          }
+          throw pwErr;
+        }
+      }
+    }
+
+    // 2. Update Firestore 'users' collection
+    if (isFirebaseConfigured && db && currentUser.uid) {
+      try {
+        const firestoreData: any = {
+          updatedAt: serverTimestamp(),
+        };
+        if (data.displayName !== undefined) firestoreData.displayName = data.displayName;
+        if (data.photoURL !== undefined) {
+          firestoreData.photoURL = data.photoURL;
+          firestoreData.avatarUrl = data.photoURL;
+        }
+        if (data.phone !== undefined) firestoreData.phone = data.phone;
+        if (data.studentId !== undefined) firestoreData.studentId = data.studentId;
+        if (data.className !== undefined) firestoreData.className = data.className;
+        if (data.cohort !== undefined) firestoreData.cohort = data.cohort;
+        if (data.bio !== undefined) firestoreData.bio = data.bio;
+        if (data.facebookUrl !== undefined) firestoreData.facebookUrl = data.facebookUrl;
+        if (data.position !== undefined) firestoreData.position = data.position;
+        if (data.linkedMemberId !== undefined) firestoreData.linkedMemberId = data.linkedMemberId;
+
+        await setDoc(doc(db, 'users', currentUser.uid), firestoreData, { merge: true });
+      } catch (fsErr) {
+        console.warn('Could not update profile in Firestore:', fsErr);
+      }
+    }
+
+    // 3. Update localStorage session
+    const updatedUser: AdminUser = {
+      ...currentUser,
+      displayName: data.displayName !== undefined ? data.displayName : currentUser.displayName,
+      photoURL: data.photoURL !== undefined ? data.photoURL : currentUser.photoURL,
+      avatarUrl: data.photoURL !== undefined ? data.photoURL : currentUser.avatarUrl,
+      phone: data.phone !== undefined ? data.phone : currentUser.phone,
+      studentId: data.studentId !== undefined ? data.studentId : currentUser.studentId,
+      className: data.className !== undefined ? data.className : currentUser.className,
+      cohort: data.cohort !== undefined ? data.cohort : currentUser.cohort,
+      bio: data.bio !== undefined ? data.bio : currentUser.bio,
+      facebookUrl: data.facebookUrl !== undefined ? data.facebookUrl : currentUser.facebookUrl,
+      position: data.position !== undefined ? data.position : currentUser.position,
+      linkedMemberId: data.linkedMemberId !== undefined ? data.linkedMemberId : currentUser.linkedMemberId,
+      updatedAt: new Date().toISOString(),
+    };
+
+    localStorage.setItem(LOCAL_ADMIN_KEY, JSON.stringify(updatedUser));
+    return updatedUser;
   },
 
   // Logout
@@ -360,3 +476,4 @@ export const authService = {
     });
   },
 };
+

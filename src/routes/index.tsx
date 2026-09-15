@@ -20,6 +20,7 @@ import { ActivitiesAdminPage } from '../pages/admin/ActivitiesAdminPage';
 import { ExecutiveMembersPage } from '../pages/admin/ExecutiveMembersPage';
 import { AccountsAdminPage } from '../pages/admin/AccountsAdminPage';
 import { SettingsPage } from '../pages/admin/SettingsPage';
+import { ProfileAdminPage } from '../pages/admin/ProfileAdminPage';
 import { authService, hasPathPermission, ROLE_PERMISSIONS } from '../services/auth.service';
 
 const AdminIndexRedirect: React.FC = () => {
@@ -80,6 +81,8 @@ export const AppRoutes: React.FC = () => {
           <Route path="accounts" element={<AccountsAdminPage />} />
           {/* Cài đặt website & Công khai kết quả */}
           <Route path="settings" element={<SettingsPage />} />
+          {/* Hồ sơ cá nhân (Bí thư, Phó bí thư, Trưởng ban, Phó ban, Admin) */}
+          <Route path="profile" element={<ProfileAdminPage />} />
         </Route>
       </Route>
 

@@ -14,6 +14,7 @@ import {
   ChevronDown,
   UserCheck,
   ClipboardCheck,
+  UserCircle,
 } from 'lucide-react';
 import { authService, hasPathPermission, ROLE_PERMISSIONS } from '../services/auth.service';
 import { AdminUser } from '../types';
@@ -34,7 +35,7 @@ export const AdminLayout: React.FC = () => {
       setCurrentUser(user);
     }
     loadUser();
-  }, []);
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     try {
@@ -83,6 +84,11 @@ export const AdminLayout: React.FC = () => {
       icon: <Settings size={18} />,
       label: 'Cài đặt',
     },
+    {
+      key: '/admin/profile',
+      icon: <UserCircle size={18} />,
+      label: 'Hồ sơ cá nhân',
+    },
   ];
 
   // Filter menu items by user permissions
@@ -93,7 +99,26 @@ export const AdminLayout: React.FC = () => {
     navigate(key);
   };
 
+  const isLeaderRole =
+    currentUser &&
+    ['admin', 'secretary', 'deputy_secretary', 'lead', 'deputy_lead'].includes(currentUser.role);
+
   const userDropdownItems = [
+    ...(isLeaderRole
+      ? [
+          {
+            key: 'profile',
+            label: (
+              <Link
+                to="/admin/profile"
+                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <UserCircle size={15} /> Hồ sơ cá nhân
+              </Link>
+            ),
+          },
+        ]
+      : []),
     {
       key: 'public-site',
       label: (
@@ -234,7 +259,10 @@ export const AdminLayout: React.FC = () => {
 
             <Dropdown menu={{ items: userDropdownItems }} placement="bottomRight" arrow>
               <Space style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: '8px' }}>
-                <Avatar style={{ backgroundColor: '#0284c7', fontWeight: 700 }}>
+                <Avatar
+                  src={currentUser?.photoURL || currentUser?.avatarUrl || undefined}
+                  style={{ backgroundColor: '#0284c7', fontWeight: 700 }}
+                >
                   {currentUser?.displayName?.[0]?.toUpperCase() || 'A'}
                 </Avatar>
                 <div style={{ display: 'none' }} className="admin-name">

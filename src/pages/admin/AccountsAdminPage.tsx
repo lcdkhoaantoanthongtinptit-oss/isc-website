@@ -87,6 +87,12 @@ const AVAILABLE_TABS = [
     icon: <Settings size={15} />,
     description: 'Cấu hình hệ thống, form tuyển dụng và công khai kết quả',
   },
+  {
+    path: '/admin/profile',
+    label: 'Hồ sơ cá nhân',
+    icon: <UserCheck size={15} />,
+    description: 'Trang thông tin cá nhân và cập nhật ảnh đại diện cán bộ',
+  },
 ];
 
 export const AccountsAdminPage: React.FC = () => {

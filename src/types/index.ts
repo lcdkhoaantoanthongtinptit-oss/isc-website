@@ -94,11 +94,12 @@ export interface Activity {
 
 export interface ExecutiveMember {
   id: string;
+  userId?: string | null; // ID tài khoản người dùng liên kết (nếu có)
   fullName: string;
-  studentId?: string; // Mã sinh viên (MSV)
-  phone?: string; // Số điện thoại (SĐT)
-  cohort?: string; // Khóa sinh viên, ví dụ "D23", "D24", "D22", "D21"
-  className?: string; // Lớp sinh viên, ví dụ "D23CQAT01-B"
+  studentId?: string | null; // Mã sinh viên (MSV)
+  phone?: string | null; // Số điện thoại (SĐT)
+  cohort?: string | null; // Khóa sinh viên, ví dụ "D23", "D24", "D22", "D21"
+  className?: string | null; // Lớp sinh viên, ví dụ "D23CQAT01-B"
   position: string;
   avatarUrl: string;
   term: string; // Chuỗi hiển thị nhiệm kỳ, ví dụ "Nhiệm kỳ 2026 - 2027"
@@ -190,10 +191,21 @@ export interface AdminUser {
   uid: string;
   email: string | null;
   displayName?: string | null;
+  photoURL?: string | null;
+  avatarUrl?: string | null;
+  phone?: string | null;
+  studentId?: string | null;
+  className?: string | null;
+  cohort?: string | null;
+  bio?: string | null;
+  facebookUrl?: string | null;
   role: AdminRole;
+  position?: string | null; // Chức vụ trong BCH (ví dụ Bí thư, Phó Bí thư, Trưởng ban...)
+  linkedMemberId?: string | null; // ID bản ghi ExecutiveMember trong tab BCH
   departmentId?: string | null;
   departmentName?: string | null;
   permissions?: string[]; // Allowed path list, e.g. ['/admin/dashboard', '/admin/collaborators']
   createdAt?: string | Timestamp | Date;
   updatedAt?: string | Timestamp | Date;
 }
+
