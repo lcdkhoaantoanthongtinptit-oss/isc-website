@@ -28,6 +28,13 @@ function cleanAdminNote(note?: string): string {
   return note;
 }
 
+/** Firestore rejects `undefined` field values – strip them before writing */
+function stripUndefined<T extends Record<string, unknown>>(obj: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== undefined)
+  ) as Partial<T>;
+}
+
 function getLocalCollaborators(): Collaborator[] {
   const data = localStorage.getItem(LOCAL_COLLABS_KEY);
   if (data) {
@@ -260,7 +267,7 @@ export const collaboratorService = {
     if (isFirebaseConfigured && db) {
       const docRef = doc(db, 'collaborators', id);
       await updateDoc(docRef, {
-        ...syncedData,
+        ...stripUndefined(syncedData as Record<string, unknown>),
         updatedAt: serverTimestamp(),
       });
 
