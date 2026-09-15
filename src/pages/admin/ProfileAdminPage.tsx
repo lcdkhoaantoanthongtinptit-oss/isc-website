@@ -566,7 +566,7 @@ export const ProfileAdminPage: React.FC = () => {
                         <Col xs={24} sm={12}>
                           <Form.Item
                             name="studentId"
-                            label="Mã Sinh viên (MSV) [Liên kết BCH]"
+                            label="Mã Sinh viên (MSV)"
                             tooltip="Mã sinh viên được dùng để liên kết chính xác với hồ sơ của bạn bên tab Ban Chấp hành"
                             rules={[{ required: true, message: 'Vui lòng nhập mã sinh viên' }]}
                           >
