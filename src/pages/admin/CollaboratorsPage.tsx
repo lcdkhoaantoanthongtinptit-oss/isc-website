@@ -3,6 +3,7 @@ import {
   Table,
   Button,
   Input,
+  InputNumber,
   Select,
   Tag,
   Space,
@@ -35,13 +36,42 @@ import {
   Calendar,
   AlertTriangle,
   CheckCircle2,
+  Award,
+  Clock,
+  XCircle,
+  HelpCircle,
 } from 'lucide-react';
 import type { ColumnsType } from 'antd/es/table';
 import { collaboratorService } from '../../services/collaborator.service';
 import { departmentService } from '../../services/department.service';
 import { excelService, normalizePhoneNumber } from '../../services/excel.service';
-import { Collaborator, CollaboratorStatus, Department, ExcelValidationError } from '../../types';
+import { Collaborator, CollaboratorStatus, InterviewStatus, Department, ExcelValidationError } from '../../types';
 import dayjs from 'dayjs';
+
+// Helper to safely format dates from Firestore Timestamp, ISO string, or Date
+const formatDate = (dateVal?: any, formatStr = 'DD/MM/YYYY'): string => {
+  if (!dateVal) return '—';
+  try {
+    if (typeof dateVal === 'object' && dateVal !== null) {
+      if (typeof dateVal.toDate === 'function') {
+        const d = dateVal.toDate();
+        return dayjs(d).isValid() ? dayjs(d).format(formatStr) : '—';
+      }
+      if ('seconds' in dateVal && typeof dateVal.seconds === 'number') {
+        const d = dayjs(dateVal.seconds * 1000);
+        return d.isValid() ? d.format(formatStr) : '—';
+      }
+      if ('_seconds' in dateVal && typeof dateVal._seconds === 'number') {
+        const d = dayjs(dateVal._seconds * 1000);
+        return d.isValid() ? d.format(formatStr) : '—';
+      }
+    }
+    const parsed = dayjs(dateVal);
+    return parsed.isValid() ? parsed.format(formatStr) : '—';
+  } catch {
+    return '—';
+  }
+};
 
 export const CollaboratorsPage: React.FC = () => {
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
@@ -52,6 +82,7 @@ export const CollaboratorsPage: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [selectedDeptFilter, setSelectedDeptFilter] = useState<string>('ALL');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('ALL');
+  const [selectedInterviewStatusFilter, setSelectedInterviewStatusFilter] = useState<string>('ALL');
   const [selectedDuplicateFilter, setSelectedDuplicateFilter] = useState<'ALL' | 'DUPLICATE' | 'UNIQUE'>('ALL');
 
   // Modals / Drawers
@@ -100,6 +131,42 @@ export const CollaboratorsPage: React.FC = () => {
     return map;
   }, [departments]);
 
+  // Render interview status tag helper
+  const renderInterviewStatusBadge = (status?: string) => {
+    switch (status) {
+      case 'DAT':
+        return (
+          <Tag color="success" style={{ borderRadius: '6px', fontWeight: 700 }}>
+            Đạt phỏng vấn
+          </Tag>
+        );
+      case 'KHONG_DAT':
+        return (
+          <Tag color="error" style={{ borderRadius: '6px', fontWeight: 700 }}>
+            Không đạt
+          </Tag>
+        );
+      case 'DANG_PV':
+        return (
+          <Tag color="processing" style={{ borderRadius: '6px', fontWeight: 700 }}>
+            Đang phỏng vấn
+          </Tag>
+        );
+      case 'CAN_XEM_XET':
+        return (
+          <Tag color="warning" style={{ borderRadius: '6px', fontWeight: 700 }}>
+            Cần xem xét
+          </Tag>
+        );
+      default:
+        return (
+          <Tag color="default" style={{ borderRadius: '6px', fontWeight: 600 }}>
+            Chưa phỏng vấn
+          </Tag>
+        );
+    }
+  };
+
   // Filtered list
   const filteredData = useMemo(() => {
     return collaborators.filter((c) => {
@@ -118,14 +185,20 @@ export const CollaboratorsPage: React.FC = () => {
       const matchStatus =
         selectedStatusFilter === 'ALL' || c.status === selectedStatusFilter;
 
+      const matchInterviewStatus =
+        selectedInterviewStatusFilter === 'ALL' ||
+        (selectedInterviewStatusFilter === 'CHUA_PV'
+          ? !c.interviewStatus || c.interviewStatus === 'CHUA_PV'
+          : c.interviewStatus === selectedInterviewStatusFilter);
+
       const matchDuplicate =
         selectedDuplicateFilter === 'ALL' ||
         (selectedDuplicateFilter === 'DUPLICATE' && c.isDuplicate) ||
         (selectedDuplicateFilter === 'UNIQUE' && !c.isDuplicate);
 
-      return matchSearch && matchDept && matchStatus && matchDuplicate;
+      return matchSearch && matchDept && matchStatus && matchInterviewStatus && matchDuplicate;
     });
-  }, [collaborators, searchText, selectedDeptFilter, selectedStatusFilter, selectedDuplicateFilter]);
+  }, [collaborators, searchText, selectedDeptFilter, selectedStatusFilter, selectedInterviewStatusFilter, selectedDuplicateFilter]);
 
   // Open Create Modal
   const handleOpenCreate = () => {
@@ -133,6 +206,7 @@ export const CollaboratorsPage: React.FC = () => {
     form.resetFields();
     form.setFieldsValue({
       status: 'PENDING',
+      interviewStatus: 'CHUA_PV',
       position: 'Cộng tác viên',
     });
     setIsFormModalOpen(true);
@@ -144,6 +218,7 @@ export const CollaboratorsPage: React.FC = () => {
     form.resetFields();
     form.setFieldsValue({
       ...record,
+      interviewStatus: record.interviewStatus || (record.status === 'PASSED' ? 'DAT' : record.status === 'FAILED' ? 'KHONG_DAT' : 'CHUA_PV'),
     });
     setIsFormModalOpen(true);
   };
@@ -376,7 +451,7 @@ export const CollaboratorsPage: React.FC = () => {
       width: 150,
     },
     {
-      title: 'Trạng thái',
+      title: 'Trạng thái CTV',
       dataIndex: 'status',
       key: 'status',
       width: 140,
@@ -409,11 +484,63 @@ export const CollaboratorsPage: React.FC = () => {
       },
     },
     {
+      title: 'Trạng thái phỏng vấn',
+      dataIndex: 'interviewStatus',
+      key: 'interviewStatus',
+      width: 170,
+      filters: [
+        { text: 'Đạt phỏng vấn', value: 'DAT' },
+        { text: 'Không đạt', value: 'KHONG_DAT' },
+        { text: 'Đang phỏng vấn', value: 'DANG_PV' },
+        { text: 'Cần xem xét', value: 'CAN_XEM_XET' },
+        { text: 'Chưa phỏng vấn', value: 'CHUA_PV' },
+      ],
+      onFilter: (value, record) => (record.interviewStatus || 'CHUA_PV') === value,
+      render: (status: InterviewStatus | undefined, record) => (
+        <div>
+          {renderInterviewStatusBadge(status)}
+          {record.interviewerName && (
+            <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>
+              CB: {record.interviewerName}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: 'Điểm',
+      dataIndex: 'interviewScore',
+      key: 'interviewScore',
+      width: 90,
+      align: 'center',
+      sorter: (a, b) => {
+        const scoreA = a.interviewScore ?? -1;
+        const scoreB = b.interviewScore ?? -1;
+        return scoreA - scoreB;
+      },
+      render: (score: number | undefined | null) =>
+        score !== undefined && score !== null ? (
+          <Tag
+            color="blue"
+            style={{
+              fontWeight: 800,
+              fontSize: '0.85rem',
+              padding: '2px 8px',
+              borderRadius: '6px',
+            }}
+          >
+            {score}
+          </Tag>
+        ) : (
+          <span style={{ color: '#94a3b8' }}>—</span>
+        ),
+    },
+    {
       title: 'Ngày cập nhật',
       dataIndex: 'updatedAt',
       key: 'updatedAt',
-      width: 120,
-      render: (date) => (date ? dayjs(date as string).format('DD/MM/YYYY') : '—'),
+      width: 130,
+      render: (date) => formatDate(date, 'DD/MM/YYYY'),
     },
     {
       title: 'Hành động',
@@ -558,19 +685,33 @@ export const CollaboratorsPage: React.FC = () => {
         <Select
           value={selectedStatusFilter}
           onChange={setSelectedStatusFilter}
-          style={{ width: '180px' }}
+          style={{ width: '170px' }}
         >
-          <Select.Option value="ALL">Tất cả trạng thái</Select.Option>
+          <Select.Option value="ALL">Tất cả trạng thái CTV</Select.Option>
           <Select.Option value="PASSED">Trúng tuyển</Select.Option>
           <Select.Option value="PENDING">Đang chờ</Select.Option>
           <Select.Option value="FAILED">Không trúng tuyển</Select.Option>
+        </Select>
+
+        {/* Filter Interview Status */}
+        <Select
+          value={selectedInterviewStatusFilter}
+          onChange={setSelectedInterviewStatusFilter}
+          style={{ width: '170px' }}
+        >
+          <Select.Option value="ALL">Tất cả phỏng vấn</Select.Option>
+          <Select.Option value="CHUA_PV">Chưa phỏng vấn</Select.Option>
+          <Select.Option value="DANG_PV">Đang phỏng vấn</Select.Option>
+          <Select.Option value="DAT">Đạt phỏng vấn</Select.Option>
+          <Select.Option value="KHONG_DAT">Không đạt</Select.Option>
+          <Select.Option value="CAN_XEM_XET">Cần xem xét</Select.Option>
         </Select>
 
         {/* Filter Duplicate */}
         <Select
           value={selectedDuplicateFilter}
           onChange={setSelectedDuplicateFilter}
-          style={{ width: '200px' }}
+          style={{ width: '190px' }}
         >
           <Select.Option value="ALL">Tất cả bản ghi</Select.Option>
           <Select.Option value="DUPLICATE">
@@ -582,19 +723,21 @@ export const CollaboratorsPage: React.FC = () => {
         {(searchText ||
           selectedDeptFilter !== 'ALL' ||
           selectedStatusFilter !== 'ALL' ||
+          selectedInterviewStatusFilter !== 'ALL' ||
           selectedDuplicateFilter !== 'ALL') && (
-          <Button
-            type="link"
-            onClick={() => {
-              setSearchText('');
-              setSelectedDeptFilter('ALL');
-              setSelectedStatusFilter('ALL');
-              setSelectedDuplicateFilter('ALL');
-            }}
-          >
-            Đặt lại bộ lọc
-          </Button>
-        )}
+            <Button
+              type="link"
+              onClick={() => {
+                setSearchText('');
+                setSelectedDeptFilter('ALL');
+                setSelectedStatusFilter('ALL');
+                setSelectedInterviewStatusFilter('ALL');
+                setSelectedDuplicateFilter('ALL');
+              }}
+            >
+              Đặt lại bộ lọc
+            </Button>
+          )}
       </div>
 
       {/* Main Table */}
@@ -618,7 +761,7 @@ export const CollaboratorsPage: React.FC = () => {
             pageSizeOptions: ['10', '20', '50', '100'],
             showTotal: (total, range) => `${range[0]}-${range[1]} trong tổng số ${total} CTV`,
           }}
-          scroll={{ x: 1200 }}
+          scroll={{ x: 1350 }}
           size="middle"
         />
       </div>
@@ -713,17 +856,80 @@ export const CollaboratorsPage: React.FC = () => {
 
 
 
-          <Form.Item
-            name="status"
-            label="Trạng thái hồ sơ"
-            rules={[{ required: true, message: 'Vui lòng chọn trạng thái!' }]}
-          >
-            <Select>
-              <Select.Option value="PENDING">Đang chờ kết quả (PENDING)</Select.Option>
-              <Select.Option value="PASSED">Trúng tuyển chính thức (PASSED)</Select.Option>
-              <Select.Option value="FAILED">Không trúng tuyển (FAILED)</Select.Option>
-            </Select>
-          </Form.Item>
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="status"
+                label="Trạng thái tuyển dụng CTV"
+                rules={[{ required: true, message: 'Vui lòng chọn trạng thái!' }]}
+              >
+                <Select
+                  onChange={(val) => {
+                    // Tự động đồng bộ sang interviewStatus
+                    if (val === 'PASSED') {
+                      form.setFieldsValue({ interviewStatus: 'DAT' });
+                    } else if (val === 'FAILED') {
+                      form.setFieldsValue({ interviewStatus: 'KHONG_DAT' });
+                    } else if (val === 'PENDING') {
+                      const cur = form.getFieldValue('interviewStatus');
+                      if (cur === 'DAT' || cur === 'KHONG_DAT') {
+                        form.setFieldsValue({ interviewStatus: 'CAN_XEM_XET' });
+                      }
+                    }
+                  }}
+                >
+                  <Select.Option value="PENDING">Đang chờ kết quả (PENDING)</Select.Option>
+                  <Select.Option value="PASSED">Trúng tuyển chính thức (PASSED)</Select.Option>
+                  <Select.Option value="FAILED">Không trúng tuyển (FAILED)</Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="interviewStatus"
+                label="Trạng thái phỏng vấn"
+              >
+                <Select
+                  placeholder="Chọn trạng thái PV"
+                  onChange={(val) => {
+                    // Tự động đồng bộ sang status
+                    if (val === 'DAT') {
+                      form.setFieldsValue({ status: 'PASSED' });
+                    } else if (val === 'KHONG_DAT') {
+                      form.setFieldsValue({ status: 'FAILED' });
+                    } else if (val === 'CAN_XEM_XET' || val === 'DANG_PV' || val === 'CHUA_PV') {
+                      form.setFieldsValue({ status: 'PENDING' });
+                    }
+                  }}
+                >
+                  <Select.Option value="CHUA_PV">Chưa phỏng vấn</Select.Option>
+                  <Select.Option value="DANG_PV">Đang phỏng vấn</Select.Option>
+                  <Select.Option value="DAT">Đạt phỏng vấn (DAT)</Select.Option>
+                  <Select.Option value="KHONG_DAT">Không đạt (KHONG_DAT)</Select.Option>
+                  <Select.Option value="CAN_XEM_XET">Cần xem xét thêm</Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item name="interviewScore" label="Điểm số phỏng vấn (Thang điểm 10)">
+                <InputNumber
+                  min={0}
+                  max={10}
+                  step={0.1}
+                  placeholder="Ví dụ: 8.5"
+                  style={{ width: '100%', height: '40px' }}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item name="interviewerName" label="Cán bộ phụ trách phỏng vấn">
+                <Input placeholder="Tên cán bộ chấm" style={{ height: '40px' }} />
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Form.Item
             name="publicNote"
@@ -769,25 +975,44 @@ export const CollaboratorsPage: React.FC = () => {
       >
         {selectedCollaborator && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {/* Status Highlight */}
-            <div
-              style={{
-                padding: '16px',
-                borderRadius: '12px',
-                background:
-                  selectedCollaborator.status === 'PASSED'
-                    ? '#f0fdf4'
-                    : selectedCollaborator.status === 'PENDING'
-                    ? '#e0f2fe'
-                    : '#f1f5f9',
-                border: '1px solid #e2e8f0',
-              }}
-            >
-              <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>TRẠNG THÁI HIỆN TẠI</div>
-              <div style={{ fontSize: '1.2rem', fontWeight: 800, marginTop: '2px' }}>
-                {selectedCollaborator.status === 'PASSED' && <span style={{ color: '#166534' }}>Trúng tuyển (PASSED)</span>}
-                {selectedCollaborator.status === 'PENDING' && <span style={{ color: '#0284c7' }}>Đang chờ kết quả (PENDING)</span>}
-                {selectedCollaborator.status === 'FAILED' && <span style={{ color: '#475569' }}>Không trúng tuyển (FAILED)</span>}
+            {/* Status Highlight Row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div
+                style={{
+                  padding: '14px',
+                  borderRadius: '12px',
+                  background:
+                    selectedCollaborator.status === 'PASSED'
+                      ? '#f0fdf4'
+                      : selectedCollaborator.status === 'PENDING'
+                        ? '#e0f2fe'
+                        : '#f1f5f9',
+                  border: '1px solid #e2e8f0',
+                }}
+              >
+                <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>TRẠNG THÁI CTV</div>
+                <div style={{ fontSize: '1rem', fontWeight: 800, marginTop: '4px' }}>
+                  {selectedCollaborator.status === 'PASSED' && <span style={{ color: '#166534' }}>Trúng tuyển</span>}
+                  {selectedCollaborator.status === 'PENDING' && <span style={{ color: '#0284c7' }}>Đang chờ</span>}
+                  {selectedCollaborator.status === 'FAILED' && <span style={{ color: '#475569' }}>Không trúng tuyển</span>}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  padding: '14px',
+                  borderRadius: '12px',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                }}
+              >
+                <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>KẾT QUẢ PHỎNG VẤN</div>
+                <div style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  {renderInterviewStatusBadge(selectedCollaborator.interviewStatus)}
+                  {selectedCollaborator.interviewScore !== undefined && selectedCollaborator.interviewScore !== null && (
+                    <strong style={{ color: '#0284c7', fontSize: '0.95rem' }}>{selectedCollaborator.interviewScore}/10</strong>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -898,103 +1123,174 @@ export const CollaboratorsPage: React.FC = () => {
               selectedCollaborator.reasonsToJoin ||
               selectedCollaborator.expectations ||
               selectedCollaborator.referralSource) && (
-              <>
-                <Divider style={{ margin: '8px 0' }} />
-                <div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0369a1', marginBottom: '8px' }}>
-                    Thông tin đơn ứng tuyển (Google Form)
+                <>
+                  <Divider style={{ margin: '8px 0' }} />
+                  <div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0369a1', marginBottom: '8px' }}>
+                      Thông tin đơn ứng tuyển (Google Form)
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '10px',
+                        background: '#f8fafc',
+                        padding: '14px',
+                        borderRadius: '10px',
+                        border: 'none',
+                      }}
+                    >
+                      {selectedCollaborator.strengths && (
+                        <div>
+                          <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.82rem' }}>
+                            💪 Điểm mạnh của bản thân:
+                          </div>
+                          <div style={{ fontSize: '0.88rem', color: '#334155', marginTop: '2px' }}>
+                            {selectedCollaborator.strengths}
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedCollaborator.weaknesses && (
+                        <div>
+                          <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.82rem' }}>
+                            ⚠️ Hạn chế của bản thân:
+                          </div>
+                          <div style={{ fontSize: '0.88rem', color: '#334155', marginTop: '2px' }}>
+                            {selectedCollaborator.weaknesses}
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedCollaborator.interests && (
+                        <div>
+                          <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.82rem' }}>
+                            🎯 Sở trường/ sở thích/ năng khiếu:
+                          </div>
+                          <div style={{ fontSize: '0.88rem', color: '#334155', marginTop: '2px' }}>
+                            {selectedCollaborator.interests}
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedCollaborator.itExperience && (
+                        <div>
+                          <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.82rem' }}>
+                            💻 Kiến thức, kinh nghiệm về Lập trình, tin học:
+                          </div>
+                          <div style={{ fontSize: '0.88rem', color: '#334155', marginTop: '2px' }}>
+                            {selectedCollaborator.itExperience}
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedCollaborator.reasonsToJoin && (
+                        <div>
+                          <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.82rem' }}>
+                            ❓ Tại sao bạn lại muốn tham gia LCĐ ATTT?
+                          </div>
+                          <div style={{ fontSize: '0.88rem', color: '#334155', marginTop: '2px' }}>
+                            {selectedCollaborator.reasonsToJoin}
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedCollaborator.expectations && (
+                        <div>
+                          <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.82rem' }}>
+                            🌟 Mong đợi học hỏi hay nhận được điều gì nhất từ LCĐ?
+                          </div>
+                          <div style={{ fontSize: '0.88rem', color: '#334155', marginTop: '2px' }}>
+                            {selectedCollaborator.expectations}
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedCollaborator.referralSource && (
+                        <div>
+                          <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.82rem' }}>
+                            📢 Bạn biết LCĐ ATTT qua đâu?
+                          </div>
+                          <div style={{ fontSize: '0.88rem', color: '#334155', marginTop: '2px' }}>
+                            {selectedCollaborator.referralSource}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '10px',
-                      background: '#f8fafc',
-                      padding: '14px',
-                      borderRadius: '10px',
-                      border: 'none',
-                    }}
-                  >
-                    {selectedCollaborator.strengths && (
-                      <div>
-                        <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.82rem' }}>
-                          💪 Điểm mạnh của bản thân:
-                        </div>
-                        <div style={{ fontSize: '0.88rem', color: '#334155', marginTop: '2px' }}>
-                          {selectedCollaborator.strengths}
-                        </div>
-                      </div>
-                    )}
+                </>
+              )}
 
-                    {selectedCollaborator.weaknesses && (
-                      <div>
-                        <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.82rem' }}>
-                          ⚠️ Hạn chế của bản thân:
+            {/* Interview Assessment Detail Box */}
+            {(selectedCollaborator.interviewScore !== undefined ||
+              selectedCollaborator.interviewEvaluation ||
+              selectedCollaborator.interviewCriteriaScores ||
+              selectedCollaborator.interviewerName) && (
+                <>
+                  <Divider style={{ margin: '8px 0' }} />
+                  <div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0284c7', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Award size={18} /> Đánh giá & Điểm số Phỏng vấn
+                    </div>
+                    <div
+                      style={{
+                        background: '#f0f9ff',
+                        padding: '14px',
+                        borderRadius: '10px',
+                        border: '1px solid #bae6fd',
+                      }}
+                    >
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '0.85rem' }}>
+                        <div>
+                          <span style={{ color: '#64748b' }}>Cán bộ chấm: </span>
+                          <strong>{selectedCollaborator.interviewerName || '—'}</strong>
                         </div>
-                        <div style={{ fontSize: '0.88rem', color: '#334155', marginTop: '2px' }}>
-                          {selectedCollaborator.weaknesses}
+                        <div>
+                          <span style={{ color: '#64748b' }}>Điểm tổng kết: </span>
+                          <strong style={{ fontSize: '1rem', color: '#0284c7' }}>
+                            {selectedCollaborator.interviewScore !== undefined && selectedCollaborator.interviewScore !== null
+                              ? `${selectedCollaborator.interviewScore}/10`
+                              : 'Chưa có'}
+                          </strong>
                         </div>
+                        {selectedCollaborator.interviewDate && (
+                          <div style={{ gridColumn: 'span 2', fontSize: '0.8rem', color: '#64748b' }}>
+                            Thời gian PV: {formatDate(selectedCollaborator.interviewDate, 'HH:mm - DD/MM/YYYY')}
+                          </div>
+                        )}
                       </div>
-                    )}
 
-                    {selectedCollaborator.interests && (
-                      <div>
-                        <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.82rem' }}>
-                          🎯 Sở trường/ sở thích/ năng khiếu:
+                      {selectedCollaborator.interviewCriteriaScores && (
+                        <div
+                          style={{
+                            marginTop: '10px',
+                            paddingTop: '8px',
+                            borderTop: '1px dashed #cbd5e1',
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
+                            gap: '6px',
+                            fontSize: '0.8rem',
+                          }}
+                        >
+                          <div>Thái độ: <strong>{selectedCollaborator.interviewCriteriaScores.attitude || '—'}/10</strong></div>
+                          <div>Giao tiếp: <strong>{selectedCollaborator.interviewCriteriaScores.communication || '—'}/10</strong></div>
+                          <div>Chuyên môn: <strong>{selectedCollaborator.interviewCriteriaScores.professionalSkills || '—'}/10</strong></div>
+                          <div>Cam kết: <strong>{selectedCollaborator.interviewCriteriaScores.commitment || '—'}/10</strong></div>
                         </div>
-                        <div style={{ fontSize: '0.88rem', color: '#334155', marginTop: '2px' }}>
-                          {selectedCollaborator.interests}
-                        </div>
-                      </div>
-                    )}
+                      )}
 
-                    {selectedCollaborator.itExperience && (
-                      <div>
-                        <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.82rem' }}>
-                          💻 Kiến thức, kinh nghiệm về Lập trình, tin học:
+                      {selectedCollaborator.interviewEvaluation && (
+                        <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px dashed #cbd5e1' }}>
+                          <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>Nhận xét cán bộ PV:</div>
+                          <div style={{ fontSize: '0.85rem', color: '#334155', marginTop: '2px', fontStyle: 'italic' }}>
+                            "{selectedCollaborator.interviewEvaluation}"
+                          </div>
                         </div>
-                        <div style={{ fontSize: '0.88rem', color: '#334155', marginTop: '2px' }}>
-                          {selectedCollaborator.itExperience}
-                        </div>
-                      </div>
-                    )}
-
-                    {selectedCollaborator.reasonsToJoin && (
-                      <div>
-                        <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.82rem' }}>
-                          ❓ Tại sao bạn lại muốn tham gia LCĐ ATTT?
-                        </div>
-                        <div style={{ fontSize: '0.88rem', color: '#334155', marginTop: '2px' }}>
-                          {selectedCollaborator.reasonsToJoin}
-                        </div>
-                      </div>
-                    )}
-
-                    {selectedCollaborator.expectations && (
-                      <div>
-                        <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.82rem' }}>
-                          🌟 Mong đợi học hỏi hay nhận được điều gì nhất từ LCĐ?
-                        </div>
-                        <div style={{ fontSize: '0.88rem', color: '#334155', marginTop: '2px' }}>
-                          {selectedCollaborator.expectations}
-                        </div>
-                      </div>
-                    )}
-
-                    {selectedCollaborator.referralSource && (
-                      <div>
-                        <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.82rem' }}>
-                          📢 Bạn biết LCĐ ATTT qua đâu?
-                        </div>
-                        <div style={{ fontSize: '0.88rem', color: '#334155', marginTop: '2px' }}>
-                          {selectedCollaborator.referralSource}
-                        </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              </>
-            )}
+                </>
+              )}
 
             <Divider style={{ margin: '8px 0' }} />
 

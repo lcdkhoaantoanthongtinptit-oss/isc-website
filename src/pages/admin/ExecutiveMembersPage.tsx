@@ -56,6 +56,8 @@ export const ExecutiveMembersPage: React.FC = () => {
     setAvatarUrl('');
     form.resetFields();
     form.setFieldsValue({
+      studentId: '',
+      phone: '',
       termStartYear: 2026,
       termEndYear: 2027,
       cohort: 'D23',
@@ -93,6 +95,8 @@ export const ExecutiveMembersPage: React.FC = () => {
 
     form.setFieldsValue({
       ...m,
+      studentId: m.studentId || '',
+      phone: m.phone || '',
       fullName: cleanName,
       cohort: autoCohort,
       termStartYear: sYear,
@@ -152,6 +156,8 @@ export const ExecutiveMembersPage: React.FC = () => {
     try {
       const payload: Omit<ExecutiveMember, 'id'> = {
         fullName: values.fullName.trim(),
+        studentId: values.studentId?.trim().toUpperCase(),
+        phone: values.phone?.trim() || null,
         cohort: values.cohort?.trim() || 'D23',
         className: values.className?.trim() || null,
         position: values.position.trim(),
@@ -214,15 +220,20 @@ export const ExecutiveMembersPage: React.FC = () => {
             <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.96rem' }}>
               {name}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
+              {r.studentId && (
+                <Tag color="cyan" style={{ fontWeight: 700, fontSize: '0.78rem', margin: 0, padding: '0 6px' }}>
+                  {r.studentId}
+                </Tag>
+              )}
               {cohort && (
-                <Tag color="blue" style={{ fontWeight: 600, fontSize: '0.78rem' }}>
+                <Tag color="blue" style={{ fontWeight: 600, fontSize: '0.78rem', margin: 0 }}>
                   Khóa {cohort}
                 </Tag>
               )}
               {r.className && (
                 <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                  {r.className}
+                  • {r.className}
                 </span>
               )}
             </div>
@@ -244,16 +255,29 @@ export const ExecutiveMembersPage: React.FC = () => {
       key: 'term',
       width: 170,
       render: (term) => (
-        <Tag color="cyan" style={{ fontWeight: 600, padding: '4px 10px', borderRadius: '6px' }}>
+        <Tag color="geekblue" style={{ fontWeight: 600, padding: '4px 10px', borderRadius: '6px' }}>
           {term}
         </Tag>
       ),
     },
     {
-      title: 'Email',
-      dataIndex: 'email',
-      key: 'email',
-      render: (e) => e || <span style={{ color: '#cbd5e1' }}>—</span>,
+      title: 'Liên hệ',
+      key: 'contact',
+      width: 180,
+      render: (_, r) => (
+        <div style={{ fontSize: '0.84rem' }}>
+          {r.phone && (
+            <div style={{ fontWeight: 600, color: '#1e293b' }}>
+              <span style={{ color: '#64748b', fontWeight: 500 }}>SĐT: </span>
+              {r.phone}
+            </div>
+          )}
+          {r.email && (
+            <div style={{ color: '#0284c7' }}>{r.email}</div>
+          )}
+          {!r.phone && !r.email && <span style={{ color: '#cbd5e1' }}>—</span>}
+        </div>
+      ),
     },
     {
       title: 'Thao tác',
@@ -352,7 +376,7 @@ export const ExecutiveMembersPage: React.FC = () => {
             </div>
 
             <Row gutter={16}>
-              <Col xs={24} md={12}>
+              <Col xs={24} sm={12} md={12}>
                 <Form.Item
                   name="fullName"
                   label="Họ và tên"
@@ -362,6 +386,33 @@ export const ExecutiveMembersPage: React.FC = () => {
                 </Form.Item>
               </Col>
 
+              <Col xs={24} sm={12} md={6}>
+                <Form.Item
+                  name="studentId"
+                  label="Mã sinh viên (MSV)"
+                  rules={[
+                    { required: true, message: 'Vui lòng điền mã sinh viên!' },
+                    { pattern: /^[A-Za-z0-9]+$/, message: 'MSV chỉ bao gồm chữ và số!' },
+                  ]}
+                >
+                  <Input placeholder="Ví dụ: B23DCAT099" style={{ textTransform: 'uppercase' }} />
+                </Form.Item>
+              </Col>
+
+              <Col xs={24} sm={12} md={6}>
+                <Form.Item
+                  name="phone"
+                  label="Số điện thoại (SĐT)"
+                  rules={[
+                    { pattern: /^[0-9+ ]{9,15}$/, message: 'Số điện thoại không hợp lệ!' },
+                  ]}
+                >
+                  <Input placeholder="Ví dụ: 0987654321" />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Row gutter={16}>
               <Col xs={24} sm={12} md={6}>
                 <Form.Item
                   name="cohort"
@@ -380,21 +431,19 @@ export const ExecutiveMembersPage: React.FC = () => {
                   <Input placeholder="Ví dụ: D23CQAT01-B" />
                 </Form.Item>
               </Col>
-            </Row>
 
-            <Row gutter={16}>
-              <Col xs={24} md={16}>
+              <Col xs={24} sm={16} md={8}>
                 <Form.Item
                   name="position"
                   label="Chức vụ trong LCĐ"
                   rules={[{ required: true, message: 'Vui lòng điền chức vụ!' }]}
                 >
-                  <Input placeholder="Ví dụ: Bí thư Liên chi đoàn, Phó Bí thư, Ủy viên Ban Chấp hành..." />
+                  <Input placeholder="Ví dụ: Bí thư Liên chi đoàn, Phó Bí thư, Ủy viên BCH..." />
                 </Form.Item>
               </Col>
 
-              <Col xs={24} md={8}>
-                <Form.Item name="displayOrder" label="Thứ tự ưu tiên hiển thị">
+              <Col xs={24} sm={8} md={4}>
+                <Form.Item name="displayOrder" label="Thứ tự">
                   <InputNumber min={1} style={{ width: '100%' }} />
                 </Form.Item>
               </Col>

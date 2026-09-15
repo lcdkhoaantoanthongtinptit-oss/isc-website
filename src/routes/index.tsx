@@ -14,6 +14,7 @@ import { LoginPage } from '../pages/admin/LoginPage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { AdminLayout } from '../layouts/AdminLayout';
 import { DashboardPage } from '../pages/admin/DashboardPage';
+import { InterviewSearchPage } from '../pages/admin/InterviewSearchPage';
 import { CollaboratorsPage } from '../pages/admin/CollaboratorsPage';
 import { ActivitiesAdminPage } from '../pages/admin/ActivitiesAdminPage';
 import { ExecutiveMembersPage } from '../pages/admin/ExecutiveMembersPage';
@@ -36,7 +37,9 @@ const AdminIndexRedirect: React.FC = () => {
         return;
       }
       const allowed = user.permissions || ROLE_PERMISSIONS[user.role]?.allowedPaths || [];
-      const firstAllowed = allowed.find((p) => hasPathPermission(user, p)) || '/admin/collaborators';
+      const firstAllowed =
+        allowed.find((p) => hasPathPermission(user, p)) ||
+        (user.role === 'interviewer' ? '/admin/interview' : '/admin/collaborators');
       setTarget(firstAllowed);
     }
     check();
@@ -69,6 +72,7 @@ export const AppRoutes: React.FC = () => {
         <Route element={<AdminLayout />}>
           <Route index element={<AdminIndexRedirect />} />
           <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="interview" element={<InterviewSearchPage />} />
           <Route path="collaborators" element={<CollaboratorsPage />} />
           <Route path="activities" element={<ActivitiesAdminPage />} />
           <Route path="executive-members" element={<ExecutiveMembersPage />} />

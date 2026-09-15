@@ -22,7 +22,10 @@ export const LoginPage: React.FC = () => {
       return '/admin/dashboard';
     }
     const allowed = user.permissions || ROLE_PERMISSIONS[user.role as AdminRole]?.allowedPaths || [];
-    return allowed.find((p: string) => hasPathPermission(user, p)) || '/admin/collaborators';
+    return (
+      allowed.find((p: string) => hasPathPermission(user, p)) ||
+      (user.role === 'interviewer' ? '/admin/interview' : '/admin/collaborators')
+    );
   };
 
   // Redirect if already logged in

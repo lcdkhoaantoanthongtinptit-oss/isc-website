@@ -10,6 +10,7 @@ import {
   serverTimestamp,
   query,
   orderBy,
+  where,
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions, isFirebaseConfigured } from './firebase';
@@ -237,24 +238,43 @@ export const collaboratorService = {
 
   // ADMIN: Update collaborator
   async updateCollaborator(id: string, data: Partial<Collaborator>): Promise<void> {
+    // 2-way automatic status synchronization between Collaborator status and Interview status
+    const syncedData: Partial<Collaborator> = { ...data };
+
+    if (syncedData.interviewStatus === 'DAT') {
+      syncedData.status = 'PASSED';
+    } else if (syncedData.interviewStatus === 'KHONG_DAT') {
+      syncedData.status = 'FAILED';
+    } else if (
+      syncedData.interviewStatus &&
+      ['CHUA_PV', 'DANG_PV', 'CAN_XEM_XET'].includes(syncedData.interviewStatus) &&
+      (!syncedData.status || syncedData.status === 'PASSED' || syncedData.status === 'FAILED')
+    ) {
+      syncedData.status = 'PENDING';
+    } else if (syncedData.status === 'PASSED' && (!syncedData.interviewStatus || syncedData.interviewStatus === 'CHUA_PV')) {
+      syncedData.interviewStatus = 'DAT';
+    } else if (syncedData.status === 'FAILED' && (!syncedData.interviewStatus || syncedData.interviewStatus === 'CHUA_PV')) {
+      syncedData.interviewStatus = 'KHONG_DAT';
+    }
+
     if (isFirebaseConfigured && db) {
       const docRef = doc(db, 'collaborators', id);
       await updateDoc(docRef, {
-        ...data,
+        ...syncedData,
         updatedAt: serverTimestamp(),
       });
 
       // Sync public lookup doc
-      const studentId = (data.studentId || id.split('_dup_')[0]).trim().toUpperCase();
+      const studentId = (syncedData.studentId || id.split('_dup_')[0]).trim().toUpperCase();
       try {
         const pubRef = doc(db, 'collaborator_results', studentId);
         const pubFields: any = { updatedAt: serverTimestamp() };
-        if (data.fullName !== undefined) pubFields.fullName = data.fullName;
-        if (data.appliedDepartmentId !== undefined) pubFields.appliedDepartmentId = data.appliedDepartmentId;
-        if (data.acceptedDepartmentId !== undefined) pubFields.acceptedDepartmentId = data.acceptedDepartmentId;
-        if (data.position !== undefined) pubFields.position = data.position;
-        if (data.status !== undefined) pubFields.status = data.status;
-        if (data.publicNote !== undefined) pubFields.publicNote = data.publicNote;
+        if (syncedData.fullName !== undefined) pubFields.fullName = syncedData.fullName;
+        if (syncedData.appliedDepartmentId !== undefined) pubFields.appliedDepartmentId = syncedData.appliedDepartmentId;
+        if (syncedData.acceptedDepartmentId !== undefined) pubFields.acceptedDepartmentId = syncedData.acceptedDepartmentId;
+        if (syncedData.position !== undefined) pubFields.position = syncedData.position;
+        if (syncedData.status !== undefined) pubFields.status = syncedData.status;
+        if (syncedData.publicNote !== undefined) pubFields.publicNote = syncedData.publicNote;
         await setDoc(pubRef, pubFields, { merge: true });
       } catch (e) {
         console.warn('Could not sync update to collaborator_results:', e);
@@ -268,11 +288,162 @@ export const collaboratorService = {
     if (index !== -1) {
       all[index] = {
         ...all[index],
-        ...data,
+        ...syncedData,
         updatedAt: new Date().toISOString(),
       };
       saveLocalCollaborators(all);
     }
+  },
+
+  // ADMIN / INTERVIEWER: Fast update interview assessment, scoring and status
+  async updateInterviewAssessment(
+    id: string,
+    assessment: Partial<Collaborator>
+  ): Promise<void> {
+    await this.updateCollaborator(id, assessment);
+  },
+
+  // ADMIN / INTERVIEWER: Search candidate on-demand without prefetching the entire dataset
+  async searchCollaboratorsForInterview(keyword: string): Promise<Collaborator[]> {
+    const raw = keyword.trim();
+    if (!raw) return [];
+
+    const upperKey = raw.toUpperCase();
+    const lowerKey = raw.toLowerCase();
+
+    if (isFirebaseConfigured && db) {
+      try {
+        const resultsMap = new Map<string, Collaborator>();
+
+        // 1. Direct O(1) lookup by studentId doc ID
+        try {
+          const directDoc = await getDoc(doc(db, 'collaborators', upperKey));
+          if (directDoc.exists()) {
+            const d = directDoc.data();
+            resultsMap.set(directDoc.id, {
+              id: directDoc.id,
+              ...d,
+              adminNote: cleanAdminNote(d.adminNote),
+            } as Collaborator);
+          }
+        } catch {
+          // ignore
+        }
+
+        // 2. Query where studentId == upperKey
+        try {
+          const qStudentId = query(collection(db, 'collaborators'), where('studentId', '==', upperKey));
+          const snapStudentId = await getDocs(qStudentId);
+          snapStudentId.docs.forEach((docSnap) => {
+            const d = docSnap.data();
+            resultsMap.set(docSnap.id, {
+              id: docSnap.id,
+              ...d,
+              adminNote: cleanAdminNote(d.adminNote),
+            } as Collaborator);
+          });
+        } catch {
+          // ignore
+        }
+
+        // 3. Query where phone == raw
+        try {
+          const qPhone = query(collection(db, 'collaborators'), where('phone', '==', raw));
+          const snapPhone = await getDocs(qPhone);
+          snapPhone.docs.forEach((docSnap) => {
+            const d = docSnap.data();
+            resultsMap.set(docSnap.id, {
+              id: docSnap.id,
+              ...d,
+              adminNote: cleanAdminNote(d.adminNote),
+            } as Collaborator);
+          });
+        } catch {
+          // ignore
+        }
+
+        // 4. Query where email == lowerKey
+        try {
+          const qEmail = query(collection(db, 'collaborators'), where('email', '==', lowerKey));
+          const snapEmail = await getDocs(qEmail);
+          snapEmail.docs.forEach((docSnap) => {
+            const d = docSnap.data();
+            resultsMap.set(docSnap.id, {
+              id: docSnap.id,
+              ...d,
+              adminNote: cleanAdminNote(d.adminNote),
+            } as Collaborator);
+          });
+        } catch {
+          // ignore
+        }
+
+        // If found by exact studentId/phone/email, return immediately!
+        if (resultsMap.size > 0) {
+          return Array.from(resultsMap.values());
+        }
+
+        // 5. Query by fullName prefix range
+        try {
+          const qName = query(
+            collection(db, 'collaborators'),
+            where('fullName', '>=', raw),
+            where('fullName', '<=', raw + '\uf8ff')
+          );
+          const snapName = await getDocs(qName);
+          snapName.docs.forEach((docSnap) => {
+            const d = docSnap.data();
+            resultsMap.set(docSnap.id, {
+              id: docSnap.id,
+              ...d,
+              adminNote: cleanAdminNote(d.adminNote),
+            } as Collaborator);
+          });
+        } catch {
+          // ignore
+        }
+
+        if (resultsMap.size > 0) {
+          return Array.from(resultsMap.values());
+        }
+
+        // 6. Targeted fallback if search keyword is substring: query and filter
+        const allSnap = await getDocs(collection(db, 'collaborators'));
+        return allSnap.docs
+          .map((docSnap) => {
+            const d = docSnap.data();
+            return {
+              id: docSnap.id,
+              ...d,
+              adminNote: cleanAdminNote(d.adminNote),
+            } as Collaborator;
+          })
+          .filter((item) => {
+            return (
+              item.studentId.toLowerCase().includes(lowerKey) ||
+              item.fullName.toLowerCase().includes(lowerKey) ||
+              (item.phone && item.phone.toLowerCase().includes(lowerKey)) ||
+              (item.email && item.email.toLowerCase().includes(lowerKey)) ||
+              (item.className && item.className.toLowerCase().includes(lowerKey))
+            );
+          });
+      } catch (err) {
+        console.error('[CollaboratorService] searchCollaboratorsForInterview error:', err);
+        return [];
+      }
+    }
+
+    // Local storage fallback
+    const all = getLocalCollaborators();
+    return all.filter((item) => {
+      return (
+        item.studentId.toLowerCase().includes(lowerKey) ||
+        item.fullName.toLowerCase().includes(lowerKey) ||
+        (item.phone && item.phone.toLowerCase().includes(lowerKey)) ||
+        (item.email && item.email.toLowerCase().includes(lowerKey)) ||
+        (item.className && item.className.toLowerCase().includes(lowerKey))
+      );
+    });
   },
 
   // ADMIN: Delete collaborator

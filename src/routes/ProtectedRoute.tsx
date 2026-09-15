@@ -58,7 +58,7 @@ export const ProtectedRoute: React.FC = () => {
     const allowedList = currentUser.permissions || ROLE_PERMISSIONS[currentUser.role]?.allowedPaths || [];
     const fallbackPath =
       allowedList.find((p) => p !== location.pathname && hasPathPermission(currentUser, p)) ||
-      '/admin/collaborators';
+      (currentUser.role === 'interviewer' ? '/admin/interview' : '/admin/collaborators');
 
     return (
       <div style={{ padding: '80px 20px', textAlign: 'center' }}>

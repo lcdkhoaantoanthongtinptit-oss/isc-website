@@ -499,12 +499,25 @@ export const excelService = {
       'Bạn mong đợi học hỏi hay nhận được điều gì nhất từ LCĐ ATTT?': c.expectations || '',
       'Tại sao bạn lại muốn tham gia LCĐ ATTT?': c.reasonsToJoin || '',
       'Vị trí': c.position,
-      'Trạng thái':
+      'Trạng thái CTV':
         c.status === 'PASSED'
           ? 'Trúng tuyển'
           : c.status === 'FAILED'
           ? 'Không trúng tuyển'
           : 'Đang chờ',
+      'Trạng thái Phỏng vấn':
+        c.interviewStatus === 'DAT'
+          ? 'Đạt phỏng vấn'
+          : c.interviewStatus === 'KHONG_DAT'
+          ? 'Không đạt'
+          : c.interviewStatus === 'DANG_PV'
+          ? 'Đang phỏng vấn'
+          : c.interviewStatus === 'CAN_XEM_XET'
+          ? 'Cần xem xét'
+          : 'Chưa phỏng vấn',
+      'Điểm phỏng vấn': c.interviewScore !== undefined && c.interviewScore !== null ? c.interviewScore : '',
+      'Cán bộ phỏng vấn': c.interviewerName || '',
+      'Nhận xét phỏng vấn': c.interviewEvaluation || '',
       'Ghi chú ứng viên': c.publicNote || '',
       'Ghi chú nội bộ Admin': c.adminNote || '',
     }));
@@ -530,8 +543,12 @@ export const excelService = {
       { wch: 35 }, // Mong đợi
       { wch: 35 }, // Lý do
       { wch: 18 }, // Vị trí
-      { wch: 16 }, // Trạng thái
-      { wch: 30 }, // Ghi chú
+      { wch: 16 }, // Trạng thái CTV
+      { wch: 22 }, // Trạng thái Phỏng vấn
+      { wch: 15 }, // Điểm phỏng vấn
+      { wch: 22 }, // Cán bộ phỏng vấn
+      { wch: 35 }, // Nhận xét phỏng vấn
+      { wch: 30 }, // Ghi chú ứng viên
       { wch: 30 }, // Ghi chú admin
     ];
     worksheet['!cols'] = colWidths;

@@ -13,6 +13,7 @@ import {
   ExternalLink,
   ChevronDown,
   UserCheck,
+  ClipboardCheck,
 } from 'lucide-react';
 import { authService, hasPathPermission, ROLE_PERMISSIONS } from '../services/auth.service';
 import { AdminUser } from '../types';
@@ -53,6 +54,11 @@ export const AdminLayout: React.FC = () => {
       label: 'Tổng quan',
     },
     {
+      key: '/admin/interview',
+      icon: <ClipboardCheck size={18} />,
+      label: 'Phỏng vấn CTV',
+    },
+    {
       key: '/admin/collaborators',
       icon: <Users size={18} />,
       label: 'Quản lý CTV',
@@ -71,21 +77,16 @@ export const AdminLayout: React.FC = () => {
       key: '/admin/accounts',
       icon: <UserCheck size={18} />,
       label: 'Quản lý Tài khoản',
-      adminOnly: true,
     },
     {
       key: '/admin/settings',
       icon: <Settings size={18} />,
       label: 'Cài đặt',
-      adminOnly: true,
     },
   ];
 
-  // Filter menu items by user role permissions
-  const visibleMenuItems = allMenuItems
-    .filter((item) => hasPathPermission(currentUser, item.key))
-    .filter((item) => !(item as any).adminOnly || currentUser?.role === 'admin')
-    .map(({ adminOnly: _, ...rest }) => rest as typeof allMenuItems[0]);
+  // Filter menu items by user permissions
+  const visibleMenuItems = allMenuItems.filter((item) => hasPathPermission(currentUser, item.key));
 
   const handleMenuClick = ({ key }: { key: string }) => {
     setMobileDrawer(false);
@@ -184,7 +185,7 @@ export const AdminLayout: React.FC = () => {
       </Sider>
 
       {/* Main Layout Area */}
-      <Layout style={{ background: '#f8fafc' }}>
+      <Layout style={{ background: '#f8fafc', minWidth: 0, overflowX: 'hidden' }}>
         {/* Header */}
         <Header
           style={{
@@ -251,23 +252,33 @@ export const AdminLayout: React.FC = () => {
                         padding: '2px 8px',
                         borderRadius: '4px',
                         background:
-                          currentUser?.role === 'admin'
+                          currentUser?.role === 'admin' || currentUser?.role === 'secretary'
                             ? '#e0f2fe'
-                            : currentUser?.role === 'lead'
+                            : currentUser?.role === 'deputy_secretary'
+                            ? '#ede9fe'
+                            : currentUser?.role === 'lead' || currentUser?.role === 'deputy_lead'
                             ? '#f3e8ff'
                             : '#dcfce7',
                         color:
-                          currentUser?.role === 'admin'
+                          currentUser?.role === 'admin' || currentUser?.role === 'secretary'
                             ? '#0369a1'
-                            : currentUser?.role === 'lead'
+                            : currentUser?.role === 'deputy_secretary'
+                            ? '#6d28d9'
+                            : currentUser?.role === 'lead' || currentUser?.role === 'deputy_lead'
                             ? '#7e22ce'
                             : '#15803d',
                       }}
                     >
                       {currentUser?.role === 'admin'
                         ? 'Super Admin'
+                        : currentUser?.role === 'secretary'
+                        ? 'Bí thư LCĐ'
+                        : currentUser?.role === 'deputy_secretary'
+                        ? 'Phó Bí thư'
                         : currentUser?.role === 'lead'
                         ? 'Trưởng ban'
+                        : currentUser?.role === 'deputy_lead'
+                        ? 'Phó ban'
                         : currentUser?.role === 'interviewer'
                         ? 'Cán bộ Phỏng vấn'
                         : currentUser?.role === 'recruiter'
@@ -317,7 +328,8 @@ export const AdminLayout: React.FC = () => {
           style={{
             margin: '24px',
             minHeight: 280,
-            overflowX: 'auto',
+            minWidth: 0,
+            overflowX: 'hidden',
           }}
         >
           <Outlet />

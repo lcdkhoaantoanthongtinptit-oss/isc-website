@@ -26,31 +26,69 @@ export const ROLE_PERMISSIONS: Record<
     allowedPaths: [
       '/admin/dashboard',
       '/admin/collaborators',
+      '/admin/interview',
       '/admin/activities',
       '/admin/executive-members',
       '/admin/accounts',
       '/admin/settings',
     ],
   },
-  lead: {
-    label: 'Trưởng ban',
-    description: 'Truy cập Tổng quan, Quản lý hồ sơ CTV, Hoạt động & Sự kiện và Ban Chấp hành',
+  secretary: {
+    label: 'Bí thư LCĐ',
+    description: 'Lãnh đạo cao nhất Liên chi đoàn, toàn quyền quản trị và điều hành toàn bộ hệ thống',
     allowedPaths: [
       '/admin/dashboard',
       '/admin/collaborators',
+      '/admin/interview',
+      '/admin/activities',
+      '/admin/executive-members',
+      '/admin/accounts',
+      '/admin/settings',
+    ],
+  },
+  deputy_secretary: {
+    label: 'Phó Bí thư LCĐ',
+    description: 'Phó Bí thư Liên chi đoàn, phụ trách chỉ đạo và điều hành công tác Đoàn - Hội',
+    allowedPaths: [
+      '/admin/dashboard',
+      '/admin/collaborators',
+      '/admin/interview',
+      '/admin/activities',
+      '/admin/executive-members',
+      '/admin/accounts',
+    ],
+  },
+  lead: {
+    label: 'Trưởng ban',
+    description: 'Truy cập Tổng quan, Quản lý hồ sơ CTV, Phỏng vấn, Hoạt động & Sự kiện và Ban Chấp hành',
+    allowedPaths: [
+      '/admin/dashboard',
+      '/admin/collaborators',
+      '/admin/interview',
+      '/admin/activities',
+      '/admin/executive-members',
+    ],
+  },
+  deputy_lead: {
+    label: 'Phó Ban',
+    description: 'Phó trưởng ban chuyên môn, phối hợp quản lý CTV, phỏng vấn và hoạt động ban',
+    allowedPaths: [
+      '/admin/dashboard',
+      '/admin/collaborators',
+      '/admin/interview',
       '/admin/activities',
       '/admin/executive-members',
     ],
   },
   interviewer: {
     label: 'Cán bộ Phỏng vấn',
-    description: 'Được quyền truy cập tab Quản lý CTV (xem, đánh giá, chấm điểm phỏng vấn)',
-    allowedPaths: ['/admin/collaborators'],
+    description: 'Được quyền tra cứu, phỏng vấn và chấm điểm hồ sơ thí sinh CTV',
+    allowedPaths: ['/admin/interview', '/admin/collaborators'],
   },
   recruiter: {
     label: 'Cán bộ Tuyển CTV',
     description: 'Chỉ có quyền xem Quản lý hồ sơ ứng viên / CTV',
-    allowedPaths: ['/admin/collaborators'],
+    allowedPaths: ['/admin/collaborators', '/admin/interview'],
   },
   editor: {
     label: 'Cán bộ Truyền thông',
@@ -74,7 +112,7 @@ export function hasPathPermission(user: AdminUser | null, pathname: string): boo
   }
 
   // 2. Fallback: only if user has no explicit custom permissions configured
-  if (user.role === 'admin') return true;
+  if (['admin', 'secretary'].includes(user.role)) return true;
 
   const config = ROLE_PERMISSIONS[user.role];
   if (!config) return false;
@@ -137,7 +175,18 @@ export const authService = {
         const tokenResult: IdTokenResult = await user.getIdTokenResult();
         if (tokenResult.claims.role) {
           const role = tokenResult.claims.role as AdminRole;
-          if (['admin', 'lead', 'interviewer', 'recruiter', 'editor'].includes(role)) {
+          if (
+            [
+              'admin',
+              'secretary',
+              'deputy_secretary',
+              'lead',
+              'deputy_lead',
+              'interviewer',
+              'recruiter',
+              'editor',
+            ].includes(role)
+          ) {
             return {
               uid: user.uid,
               email: user.email,
@@ -195,7 +244,16 @@ export const authService = {
         // If user document found in Firestore, use its role
         if (userDocData) {
           const rawRole = (userDocData.role || 'admin').toLowerCase();
-          const validRole: AdminRole = ['admin', 'lead', 'interviewer', 'recruiter', 'editor'].includes(rawRole)
+          const validRole: AdminRole = [
+            'admin',
+            'secretary',
+            'deputy_secretary',
+            'lead',
+            'deputy_lead',
+            'interviewer',
+            'recruiter',
+            'editor',
+          ].includes(rawRole)
             ? (rawRole as AdminRole)
             : 'admin';
 

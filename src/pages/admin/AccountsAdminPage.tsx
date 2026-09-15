@@ -35,6 +35,7 @@ import {
   KeyRound,
   LayoutDashboard,
   Building2,
+  ClipboardCheck,
 } from 'lucide-react';
 import type { ColumnsType } from 'antd/es/table';
 import { accountService, ManagedAccountItem, CreateAccountInput } from '../../services/account.service';
@@ -51,10 +52,16 @@ const AVAILABLE_TABS = [
     description: 'Xem số liệu thống kê chung',
   },
   {
+    path: '/admin/interview',
+    label: 'Phỏng vấn CTV',
+    icon: <ClipboardCheck size={15} />,
+    description: 'Bàn tra cứu hồ sơ thí sinh và chấm điểm phỏng vấn trực tiếp',
+  },
+  {
     path: '/admin/collaborators',
     label: 'Quản lý CTV',
     icon: <Users size={15} />,
-    description: 'Xem hồ sơ, chấm điểm, phỏng vấn và lọc kết quả CTV',
+    description: 'Xem hồ sơ, danh sách và lọc kết quả tuyển CTV',
   },
   {
     path: '/admin/activities',
@@ -67,6 +74,18 @@ const AVAILABLE_TABS = [
     label: 'Ban Chấp hành',
     icon: <Award size={15} />,
     description: 'Quản lý danh sách nhân sự Ban Chấp hành',
+  },
+  {
+    path: '/admin/accounts',
+    label: 'Tạo & Quản lý Tài khoản',
+    icon: <UserCheck size={15} />,
+    description: 'Tạo tài khoản cán bộ và tùy chỉnh phân quyền các tab',
+  },
+  {
+    path: '/admin/settings',
+    label: 'Cài đặt',
+    icon: <Settings size={15} />,
+    description: 'Cấu hình hệ thống, form tuyển dụng và công khai kết quả',
   },
 ];
 
@@ -118,24 +137,39 @@ export const AccountsAdminPage: React.FC = () => {
     setSelectedRole(role);
     if (role === 'interviewer') {
       createForm.setFieldsValue({
-        permissions: ['/admin/collaborators'],
+        permissions: ['/admin/interview', '/admin/collaborators'],
       });
-    } else if (role === 'lead') {
+    } else if (role === 'lead' || role === 'deputy_lead') {
       createForm.setFieldsValue({
         permissions: [
           '/admin/dashboard',
+          '/admin/interview',
           '/admin/collaborators',
           '/admin/activities',
           '/admin/executive-members',
         ],
       });
-    } else if (role === 'admin') {
+    } else if (role === 'secretary' || role === 'admin') {
       createForm.setFieldsValue({
         permissions: [
           '/admin/dashboard',
+          '/admin/interview',
           '/admin/collaborators',
           '/admin/activities',
           '/admin/executive-members',
+          '/admin/accounts',
+          '/admin/settings',
+        ],
+      });
+    } else if (role === 'deputy_secretary') {
+      createForm.setFieldsValue({
+        permissions: [
+          '/admin/dashboard',
+          '/admin/interview',
+          '/admin/collaborators',
+          '/admin/activities',
+          '/admin/executive-members',
+          '/admin/accounts',
         ],
       });
     }
@@ -146,7 +180,7 @@ export const AccountsAdminPage: React.FC = () => {
     setSelectedRole('interviewer');
     createForm.setFieldsValue({
       role: 'interviewer',
-      permissions: ['/admin/collaborators'],
+      permissions: ['/admin/interview', '/admin/collaborators'],
     });
     setIsCreateOpen(true);
   };
@@ -163,6 +197,7 @@ export const AccountsAdminPage: React.FC = () => {
         displayName: values.displayName,
         role: values.role,
         departmentId: values.departmentId || null,
+        departmentName: dept?.name || null,
         permissions:
           Array.isArray(values.permissions)
             ? values.permissions
@@ -250,11 +285,32 @@ export const AccountsAdminPage: React.FC = () => {
             Quản trị viên Cấp cao
           </Tag>
         );
+      case 'secretary':
+        return (
+          <Tag color="cyan" style={{ fontWeight: 600, padding: '2px 8px', borderRadius: '6px' }}>
+            <ShieldCheck size={12} style={{ display: 'inline', marginRight: '4px' }} />
+            Bí thư LCĐ
+          </Tag>
+        );
+      case 'deputy_secretary':
+        return (
+          <Tag color="geekblue" style={{ fontWeight: 600, padding: '2px 8px', borderRadius: '6px' }}>
+            <Award size={12} style={{ display: 'inline', marginRight: '4px' }} />
+            Phó Bí thư
+          </Tag>
+        );
       case 'lead':
         return (
           <Tag color="purple" style={{ fontWeight: 600, padding: '2px 8px', borderRadius: '6px' }}>
             <Award size={12} style={{ display: 'inline', marginRight: '4px' }} />
             Trưởng ban
+          </Tag>
+        );
+      case 'deputy_lead':
+        return (
+          <Tag color="magenta" style={{ fontWeight: 600, padding: '2px 8px', borderRadius: '6px' }}>
+            <Award size={12} style={{ display: 'inline', marginRight: '4px' }} />
+            Phó ban
           </Tag>
         );
       case 'interviewer':
@@ -281,8 +337,9 @@ export const AccountsAdminPage: React.FC = () => {
     {
       title: 'Cán bộ',
       key: 'user',
+      width: 260,
       render: (_, record) => (
-        <Space>
+        <Space style={{ maxWidth: '100%' }}>
           <Avatar
             style={{
               backgroundColor:
@@ -314,21 +371,27 @@ export const AccountsAdminPage: React.FC = () => {
       title: 'Vai trò',
       dataIndex: 'role',
       key: 'role',
+      width: 160,
       render: (role: AdminRole) => renderRoleBadge(role),
     },
     {
       title: 'Ban trực thuộc',
       key: 'department',
+      width: 160,
       render: (_, record) => {
-        if (record.departmentName) {
+        const deptName =
+          record.departmentName ||
+          departments.find((d) => d.id === record.departmentId)?.name;
+
+        if (deptName) {
           return (
             <Tag color="default" style={{ fontWeight: 600 }}>
               <Building2 size={12} style={{ display: 'inline', marginRight: '4px' }} />
-              {record.departmentName}
+              {deptName}
             </Tag>
           );
         }
-        if (record.role === 'admin') {
+        if (record.role === 'admin' || record.role === 'secretary') {
           return <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Toàn tổ chức</span>;
         }
         return <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>—</span>;
@@ -337,6 +400,7 @@ export const AccountsAdminPage: React.FC = () => {
     {
       title: 'Quyền truy cập tab',
       key: 'permissions',
+      width: 260,
       render: (_, record) => {
         const paths = record.permissions || ROLE_PERMISSIONS[record.role]?.allowedPaths || [];
         if (record.role === 'admin' && (!record.permissions || record.permissions.length >= 6)) {
@@ -363,7 +427,7 @@ export const AccountsAdminPage: React.FC = () => {
     {
       title: 'Thao tác',
       key: 'actions',
-      width: 120,
+      width: 110,
       render: (_, record) => (
         <Space>
           <Tooltip title="Chỉnh sửa quyền">
@@ -397,7 +461,15 @@ export const AccountsAdminPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '4px 0 30px' }}>
+    <div
+      style={{
+        padding: '4px 0 30px',
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+        overflowX: 'hidden',
+      }}
+    >
       {/* Top Header */}
       <div
         style={{
@@ -435,7 +507,7 @@ export const AccountsAdminPage: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+      <Row gutter={[16, 16]} style={{ marginBottom: '24px', marginLeft: 0, marginRight: 0 }}>
         <Col xs={12} sm={6}>
           <Card
             bordered={false}
@@ -500,7 +572,7 @@ export const AccountsAdminPage: React.FC = () => {
         }}
         styles={{ body: { padding: '16px 20px' } }}
       >
-        <Row gutter={[16, 16]} align="middle" justify="space-between">
+        <Row gutter={[16, 16]} align="middle" justify="space-between" style={{ marginLeft: 0, marginRight: 0 }}>
           <Col xs={24} md={12}>
             <Input
               placeholder="Tìm theo email hoặc họ tên cán bộ..."
@@ -517,11 +589,14 @@ export const AccountsAdminPage: React.FC = () => {
               <Select
                 value={roleFilter}
                 onChange={setRoleFilter}
-                style={{ width: 200, height: '40px' }}
+                style={{ width: 220, height: '40px' }}
                 options={[
                   { value: 'ALL', label: 'Tất cả vai trò' },
-                  { value: 'interviewer', label: 'Cán bộ Phỏng vấn' },
+                  { value: 'secretary', label: 'Bí thư LCĐ' },
+                  { value: 'deputy_secretary', label: 'Phó Bí thư' },
                   { value: 'lead', label: 'Trưởng ban' },
+                  { value: 'deputy_lead', label: 'Phó ban' },
+                  { value: 'interviewer', label: 'Cán bộ Phỏng vấn' },
                   { value: 'admin', label: 'Quản trị viên' },
                 ]}
               />
@@ -533,7 +608,7 @@ export const AccountsAdminPage: React.FC = () => {
       {/* Main Table */}
       <Card
         bordered={false}
-        style={{ borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+        style={{ borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', overflow: 'hidden' }}
         styles={{ body: { padding: '12px 16px' } }}
       >
         <Table
@@ -542,6 +617,7 @@ export const AccountsAdminPage: React.FC = () => {
           rowKey="uid"
           loading={loading}
           pagination={{ pageSize: 8, showTotal: (t) => `Tổng ${t} tài khoản` }}
+          scroll={{ x: 800 }}
         />
       </Card>
 
@@ -616,11 +692,20 @@ export const AccountsAdminPage: React.FC = () => {
               onChange={handleRoleChange}
               options={[
                 {
-                  value: 'interviewer',
+                  value: 'secretary',
                   label: (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Tag color="green">Phỏng vấn</Tag>
-                      <span>Cán bộ Phỏng vấn (Được quyền vào tab Quản lý CTV)</span>
+                      <Tag color="cyan">Bí thư</Tag>
+                      <span>Bí thư LCĐ (Lãnh đạo cao nhất, toàn quyền hệ thống)</span>
+                    </div>
+                  ),
+                },
+                {
+                  value: 'deputy_secretary',
+                  label: (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Tag color="geekblue">Phó Bí thư</Tag>
+                      <span>Phó Bí thư LCĐ (Chỉ đạo hoạt động, nhân sự, CTV)</span>
                     </div>
                   ),
                 },
@@ -630,6 +715,24 @@ export const AccountsAdminPage: React.FC = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Tag color="purple">Trưởng ban</Tag>
                       <span>Trưởng ban (Quản lý CTV, Hoạt động & Sự kiện, BCH)</span>
+                    </div>
+                  ),
+                },
+                {
+                  value: 'deputy_lead',
+                  label: (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Tag color="magenta">Phó ban</Tag>
+                      <span>Phó ban (Phối hợp quản lý CTV, hoạt động của ban)</span>
+                    </div>
+                  ),
+                },
+                {
+                  value: 'interviewer',
+                  label: (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Tag color="green">Phỏng vấn</Tag>
+                      <span>Cán bộ Phỏng vấn (Bàn phỏng vấn & tra cứu thí sinh CTV)</span>
                     </div>
                   ),
                 },
@@ -646,23 +749,27 @@ export const AccountsAdminPage: React.FC = () => {
             />
           </Form.Item>
 
-          {/* Chọn ban trực thuộc (cho Trưởng ban hoặc CTV) */}
-          {selectedRole === 'lead' && (
-            <Form.Item
-              name="departmentId"
-              label={<span style={{ fontWeight: 600 }}>Ban phụ trách</span>}
-              rules={[{ required: true, message: 'Vui lòng chọn ban phụ trách!' }]}
-            >
-              <Select
-                placeholder="Chọn Ban phụ trách"
-                style={{ height: '42px' }}
-                options={departments.map((d) => ({
-                  value: d.id,
-                  label: d.name,
-                }))}
-              />
-            </Form.Item>
-          )}
+          {/* Chọn ban trực thuộc */}
+          <Form.Item
+            name="departmentId"
+            label={<span style={{ fontWeight: 600 }}>Ban trực thuộc</span>}
+            rules={[
+              {
+                required: selectedRole === 'lead' || selectedRole === 'deputy_lead',
+                message: 'Vui lòng chọn ban trực thuộc!',
+              },
+            ]}
+          >
+            <Select
+              placeholder="Chọn Ban trực thuộc (nếu có)"
+              allowClear
+              style={{ height: '42px' }}
+              options={departments.map((d) => ({
+                value: d.id,
+                label: d.name,
+              }))}
+            />
+          </Form.Item>
 
           {/* Quyền hạn cụ thể các Tab */}
           <Form.Item
@@ -769,13 +876,62 @@ export const AccountsAdminPage: React.FC = () => {
           >
             <Select
               style={{ height: '44px' }}
+              onChange={(role: AdminRole) => {
+                if (role === 'interviewer') {
+                  editForm.setFieldsValue({
+                    permissions: ['/admin/interview', '/admin/collaborators'],
+                  });
+                } else if (role === 'lead' || role === 'deputy_lead') {
+                  editForm.setFieldsValue({
+                    permissions: [
+                      '/admin/dashboard',
+                      '/admin/interview',
+                      '/admin/collaborators',
+                      '/admin/activities',
+                      '/admin/executive-members',
+                    ],
+                  });
+                } else if (role === 'secretary' || role === 'admin') {
+                  editForm.setFieldsValue({
+                    permissions: [
+                      '/admin/dashboard',
+                      '/admin/interview',
+                      '/admin/collaborators',
+                      '/admin/activities',
+                      '/admin/executive-members',
+                      '/admin/accounts',
+                      '/admin/settings',
+                    ],
+                  });
+                } else if (role === 'deputy_secretary') {
+                  editForm.setFieldsValue({
+                    permissions: [
+                      '/admin/dashboard',
+                      '/admin/interview',
+                      '/admin/collaborators',
+                      '/admin/activities',
+                      '/admin/executive-members',
+                      '/admin/accounts',
+                    ],
+                  });
+                }
+              }}
               options={[
                 {
-                  value: 'interviewer',
+                  value: 'secretary',
                   label: (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Tag color="green">Phỏng vấn</Tag>
-                      <span>Cán bộ Phỏng vấn (Được quyền vào tab Quản lý CTV)</span>
+                      <Tag color="cyan">Bí thư</Tag>
+                      <span>Bí thư LCĐ (Lãnh đạo cao nhất, toàn quyền hệ thống)</span>
+                    </div>
+                  ),
+                },
+                {
+                  value: 'deputy_secretary',
+                  label: (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Tag color="geekblue">Phó Bí thư</Tag>
+                      <span>Phó Bí thư LCĐ (Chỉ đạo hoạt động, nhân sự, CTV)</span>
                     </div>
                   ),
                 },
@@ -785,6 +941,24 @@ export const AccountsAdminPage: React.FC = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Tag color="purple">Trưởng ban</Tag>
                       <span>Trưởng ban (Quản lý CTV, Hoạt động & Sự kiện, BCH)</span>
+                    </div>
+                  ),
+                },
+                {
+                  value: 'deputy_lead',
+                  label: (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Tag color="magenta">Phó ban</Tag>
+                      <span>Phó ban (Phối hợp quản lý CTV, hoạt động của ban)</span>
+                    </div>
+                  ),
+                },
+                {
+                  value: 'interviewer',
+                  label: (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Tag color="green">Phỏng vấn</Tag>
+                      <span>Cán bộ Phỏng vấn (Bàn phỏng vấn & tra cứu thí sinh CTV)</span>
                     </div>
                   ),
                 },
@@ -803,10 +977,10 @@ export const AccountsAdminPage: React.FC = () => {
 
           <Form.Item
             name="departmentId"
-            label={<span style={{ fontWeight: 600 }}>Ban phụ trách (Nếu là Trưởng ban)</span>}
+            label={<span style={{ fontWeight: 600 }}>Ban trực thuộc</span>}
           >
             <Select
-              placeholder="Chọn Ban phụ trách (nếu có)"
+              placeholder="Chọn Ban trực thuộc (nếu có)"
               allowClear
               style={{ height: '42px' }}
               options={departments.map((d) => ({
@@ -836,6 +1010,9 @@ export const AccountsAdminPage: React.FC = () => {
                       <Space>
                         {tab.icon}
                         <span>{tab.label}</span>
+                        <span style={{ color: '#64748b', fontWeight: 400, fontSize: '0.82rem' }}>
+                          — {tab.description}
+                        </span>
                       </Space>
                     </Checkbox>
                   </div>

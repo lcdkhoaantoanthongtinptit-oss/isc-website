@@ -1,6 +1,7 @@
 import { Timestamp } from 'firebase/firestore';
 
 export type CollaboratorStatus = 'PENDING' | 'PASSED' | 'FAILED';
+export type InterviewStatus = 'CHUA_PV' | 'DANG_PV' | 'DAT' | 'KHONG_DAT' | 'CAN_XEM_XET';
 
 export interface Collaborator {
   id: string; // Document ID, usually studentId
@@ -27,6 +28,18 @@ export interface Collaborator {
   referralSource?: string;
   expectations?: string;
   reasonsToJoin?: string;
+  // Interview Assessment Details
+  interviewScore?: number | null;
+  interviewEvaluation?: string;
+  interviewStatus?: InterviewStatus;
+  interviewerName?: string;
+  interviewDate?: string;
+  interviewCriteriaScores?: {
+    attitude?: number;
+    communication?: number;
+    professionalSkills?: number;
+    commitment?: number;
+  };
   createdAt?: string | Timestamp | Date;
   updatedAt?: string | Timestamp | Date;
 }
@@ -82,6 +95,8 @@ export interface Activity {
 export interface ExecutiveMember {
   id: string;
   fullName: string;
+  studentId?: string; // Mã sinh viên (MSV)
+  phone?: string; // Số điện thoại (SĐT)
   cohort?: string; // Khóa sinh viên, ví dụ "D23", "D24", "D22", "D21"
   className?: string; // Lớp sinh viên, ví dụ "D23CQAT01-B"
   position: string;
@@ -161,7 +176,15 @@ export interface ExcelValidationError {
   message: string;
 }
 
-export type AdminRole = 'admin' | 'lead' | 'interviewer' | 'recruiter' | 'editor';
+export type AdminRole =
+  | 'admin'
+  | 'secretary'
+  | 'deputy_secretary'
+  | 'lead'
+  | 'deputy_lead'
+  | 'interviewer'
+  | 'recruiter'
+  | 'editor';
 
 export interface AdminUser {
   uid: string;

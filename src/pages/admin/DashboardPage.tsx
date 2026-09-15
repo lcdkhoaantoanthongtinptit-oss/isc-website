@@ -1,16 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Card, Statistic, Table, Tag, Spin, Button } from 'antd';
+import { Row, Col, Card, Tag, Spin } from 'antd';
 import {
   Users,
   CheckCircle2,
-  XCircle,
   Clock,
-  Building2,
   TrendingUp,
   Award,
-  ArrowUpRight,
+  BarChart3,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -23,26 +20,20 @@ import {
 } from 'chart.js';
 import { Doughnut, Bar } from 'react-chartjs-2';
 import { collaboratorService } from '../../services/collaborator.service';
-import { departmentService } from '../../services/department.service';
-import { Collaborator, Department } from '../../types';
+import { Collaborator } from '../../types';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, ChartTitle);
 
 export const DashboardPage: React.FC = () => {
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
       try {
         setLoading(true);
-        const [collabs, depts] = await Promise.all([
-          collaboratorService.getCollaborators(),
-          departmentService.getDepartments(),
-        ]);
+        const collabs = await collaboratorService.getCollaborators();
         setCollaborators(collabs);
-        setDepartments(depts);
       } catch (err) {
         console.error('Error loading dashboard data:', err);
       } finally {
@@ -67,22 +58,85 @@ export const DashboardPage: React.FC = () => {
   const failed = collaborators.filter((c) => c.status === 'FAILED').length;
   const passRate = total > 0 ? Math.round((passed / total) * 100) : 0;
 
-  // Department counts
-  const deptCounts = departments.map((dept) => {
-    const count = collaborators.filter(
-      (c) => c.appliedDepartmentId === dept.id || c.acceptedDepartmentId === dept.id
-    ).length;
-    const passedInDept = collaborators.filter(
-      (c) => c.acceptedDepartmentId === dept.id && c.status === 'PASSED'
-    ).length;
-    return {
-      dept,
-      count,
-      passedInDept,
-    };
-  });
+  // Score statistics & distribution buckets
+  const scoredCollaborators = collaborators.filter(
+    (c) => c.interviewScore !== undefined && c.interviewScore !== null
+  );
+  const avgScore =
+    scoredCollaborators.length > 0
+      ? (
+          scoredCollaborators.reduce((sum, c) => sum + (c.interviewScore || 0), 0) /
+          scoredCollaborators.length
+        ).toFixed(1)
+      : '0.0';
 
-  // Chart 1: Status Doughnut Chart
+  const countBelow5 = collaborators.filter(
+    (c) => c.interviewScore !== undefined && c.interviewScore !== null && c.interviewScore < 5
+  ).length;
+  const count5to6 = collaborators.filter(
+    (c) => c.interviewScore !== undefined && c.interviewScore !== null && c.interviewScore >= 5 && c.interviewScore < 6
+  ).length;
+  const count6to7 = collaborators.filter(
+    (c) => c.interviewScore !== undefined && c.interviewScore !== null && c.interviewScore >= 6 && c.interviewScore < 7
+  ).length;
+  const count7to8 = collaborators.filter(
+    (c) => c.interviewScore !== undefined && c.interviewScore !== null && c.interviewScore >= 7 && c.interviewScore < 8
+  ).length;
+  const count8to9 = collaborators.filter(
+    (c) => c.interviewScore !== undefined && c.interviewScore !== null && c.interviewScore >= 8 && c.interviewScore < 9
+  ).length;
+  const count9to10 = collaborators.filter(
+    (c) => c.interviewScore !== undefined && c.interviewScore !== null && c.interviewScore >= 9 && c.interviewScore <= 10
+  ).length;
+  const countNoScore = collaborators.filter(
+    (c) => c.interviewScore === undefined || c.interviewScore === null
+  ).length;
+
+  // Chart 1: Interview Score Distribution Bar Chart
+  const scoreChartData = {
+    labels: ['< 5.0 điểm', '5.0 - 5.9', '6.0 - 6.9', '7.0 - 7.9', '8.0 - 8.9', '9.0 - 10.0', 'Chưa có điểm'],
+    datasets: [
+      {
+        label: 'Số lượng ứng viên',
+        data: [countBelow5, count5to6, count6to7, count7to8, count8to9, count9to10, countNoScore],
+        backgroundColor: [
+          '#ef4444', // < 5: Đỏ
+          '#f97316', // 5-5.9: Cam
+          '#eab308', // 6-6.9: Vàng
+          '#0284c7', // 7-7.9: Xanh dương
+          '#10b981', // 8-8.9: Xanh lá
+          '#8b5cf6', // 9-10: Tím
+          '#94a3b8', // Chưa có điểm: Xám
+        ],
+        borderRadius: 8,
+      },
+    ],
+  };
+
+  const scoreChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: (context: any) => ` ${context.parsed.y} ứng viên`,
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: { stepSize: 1 },
+        grid: { color: '#f1f5f9' },
+      },
+      x: {
+        grid: { display: false },
+      },
+    },
+  };
+
+  // Chart 2: Status Doughnut Chart
   const statusChartData = {
     labels: ['Trúng tuyển (PASSED)', 'Đang chờ (PENDING)', 'Không trúng tuyển (FAILED)'],
     datasets: [
@@ -94,27 +148,6 @@ export const DashboardPage: React.FC = () => {
       },
     ],
   };
-
-  // Chart 2: Departments Bar Chart
-  const deptChartData = {
-    labels: departments.map((d) => d.name.replace('Ban ', '')),
-    datasets: [
-      {
-        label: 'Tổng ứng viên',
-        data: deptCounts.map((d) => d.count),
-        backgroundColor: '#0284c7',
-        borderRadius: 6,
-      },
-      {
-        label: 'Đã trúng tuyển',
-        data: deptCounts.map((d) => d.passedInDept),
-        backgroundColor: '#10b981',
-        borderRadius: 6,
-      },
-    ],
-  };
-
-  const recentCollaborators = collaborators.slice(0, 5);
 
   return (
     <div>
@@ -268,33 +301,31 @@ export const DashboardPage: React.FC = () => {
       </Row>
 
       {/* Charts Row */}
-      <Row gutter={[20, 20]} style={{ marginBottom: '24px' }}>
-        {/* Department Distribution Bar Chart */}
+      <Row gutter={[20, 20]}>
+        {/* Score Distribution Bar Chart */}
         <Col xs={24} lg={15}>
           <Card
             title={
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Building2 size={18} color="#0284c7" />
-                <span style={{ fontWeight: 700 }}>Phân bố ứng viên theo Ban Chuyên môn</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <BarChart3 size={18} color="#0284c7" />
+                  <span style={{ fontWeight: 700 }}>Phân bố ứng viên theo mức điểm chấm</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Tag color="blue" style={{ fontWeight: 600, borderRadius: '6px' }}>
+                    Đã chấm: {scoredCollaborators.length}/{total}
+                  </Tag>
+                  <Tag color="green" style={{ fontWeight: 700, borderRadius: '6px' }}>
+                    Điểm TB: {avgScore}/10
+                  </Tag>
+                </div>
               </div>
             }
             bordered={false}
             style={{ borderRadius: '14px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}
           >
-            <div style={{ height: '280px' }}>
-              <Bar
-                data={deptChartData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: { position: 'top' as const },
-                  },
-                  scales: {
-                    y: { beginAtZero: true, ticks: { stepSize: 1 } },
-                  },
-                }}
-              />
+            <div style={{ height: '320px' }}>
+              <Bar data={scoreChartData} options={scoreChartOptions} />
             </div>
           </Card>
         </Col>
@@ -311,7 +342,7 @@ export const DashboardPage: React.FC = () => {
             bordered={false}
             style={{ borderRadius: '14px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}
           >
-            <div style={{ height: '280px', display: 'flex', justifyContent: 'center' }}>
+            <div style={{ height: '320px', display: 'flex', justifyContent: 'center' }}>
               <Doughnut
                 data={statusChartData}
                 options={{
@@ -326,66 +357,6 @@ export const DashboardPage: React.FC = () => {
           </Card>
         </Col>
       </Row>
-
-      {/* Recent Collaborators Table */}
-      <Card
-        title={
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontWeight: 700 }}>Hồ sơ ứng viên mới nhất</span>
-            <Link to="/admin/collaborators">
-              <Button type="link" style={{ padding: 0, fontWeight: 600 }}>
-                Quản lý toàn bộ danh sách <ArrowUpRight size={16} style={{ display: 'inline' }} />
-              </Button>
-            </Link>
-          </div>
-        }
-        bordered={false}
-        style={{ borderRadius: '14px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}
-      >
-        <Table
-          dataSource={recentCollaborators}
-          rowKey="id"
-          pagination={false}
-          size="middle"
-          columns={[
-            {
-              title: 'MSSV',
-              dataIndex: 'studentId',
-              key: 'studentId',
-              render: (txt) => <strong>{txt}</strong>,
-            },
-            {
-              title: 'Họ và tên',
-              dataIndex: 'fullName',
-              key: 'fullName',
-            },
-            {
-              title: 'Lớp',
-              dataIndex: 'className',
-              key: 'className',
-            },
-            {
-              title: 'Ban ứng tuyển',
-              dataIndex: 'appliedDepartmentId',
-              key: 'appliedDepartmentId',
-              render: (deptId) => {
-                const dept = departments.find((d) => d.id === deptId);
-                return dept ? dept.name : deptId;
-              },
-            },
-            {
-              title: 'Trạng thái',
-              dataIndex: 'status',
-              key: 'status',
-              render: (status) => {
-                if (status === 'PASSED') return <Tag color="success">Trúng tuyển</Tag>;
-                if (status === 'PENDING') return <Tag color="processing">Đang chờ</Tag>;
-                return <Tag color="default">Không trúng tuyển</Tag>;
-              },
-            },
-          ]}
-        />
-      </Card>
     </div>
   );
 };
