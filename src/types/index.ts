@@ -161,12 +161,16 @@ export interface ExcelValidationError {
   message: string;
 }
 
-export type AdminRole = 'admin' | 'recruiter' | 'editor';
+export type AdminRole = 'admin' | 'lead' | 'interviewer' | 'recruiter' | 'editor';
 
 export interface AdminUser {
   uid: string;
   email: string | null;
   displayName?: string | null;
   role: AdminRole;
-  permissions?: string[]; // e.g. ['dashboard', 'collaborators', 'activities', 'executive-members']
+  departmentId?: string | null;
+  departmentName?: string | null;
+  permissions?: string[]; // Allowed path list, e.g. ['/admin/dashboard', '/admin/collaborators']
+  createdAt?: string | Timestamp | Date;
+  updatedAt?: string | Timestamp | Date;
 }

@@ -12,6 +12,7 @@ import {
   Menu as MenuIcon,
   ExternalLink,
   ChevronDown,
+  UserCheck,
 } from 'lucide-react';
 import { authService, hasPathPermission, ROLE_PERMISSIONS } from '../services/auth.service';
 import { AdminUser } from '../types';
@@ -67,6 +68,12 @@ export const AdminLayout: React.FC = () => {
       label: 'Ban Chấp hành',
     },
     {
+      key: '/admin/accounts',
+      icon: <UserCheck size={18} />,
+      label: 'Quản lý Tài khoản',
+      adminOnly: true,
+    },
+    {
       key: '/admin/settings',
       icon: <Settings size={18} />,
       label: 'Cài đặt',
@@ -109,7 +116,7 @@ export const AdminLayout: React.FC = () => {
   ];
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ minHeight: '100vh', background: '#f8fafc' }}>
       {/* Desktop Fixed Sider (Sticky top 0 so it never drifts on scroll) */}
       <Sider
         collapsible
@@ -117,14 +124,16 @@ export const AdminLayout: React.FC = () => {
         onCollapse={(value) => setCollapsed(value)}
         breakpoint="lg"
         collapsedWidth={80}
+        theme="light"
         style={{
           position: 'sticky',
           top: 0,
           left: 0,
           height: '100vh',
           overflowY: 'auto',
-          background: '#0f172a',
-          boxShadow: '2px 0 8px rgba(0,0,0,0.05)',
+          background: '#ffffff',
+          boxShadow: '1px 0 3px rgba(0, 0, 0, 0.03)',
+          borderRight: '1px solid #e2e8f0',
           zIndex: 101,
         }}
         className="admin-sider-desktop"
@@ -138,7 +147,7 @@ export const AdminLayout: React.FC = () => {
             justifyContent: collapsed ? 'center' : 'flex-start',
             padding: collapsed ? '0' : '0 20px',
             gap: '12px',
-            borderBottom: '1px solid #1e293b',
+            borderBottom: '1px solid #f1f5f9',
           }}
         >
           <img
@@ -153,25 +162,29 @@ export const AdminLayout: React.FC = () => {
           />
           {!collapsed && (
             <div style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}>
-              <div style={{ color: '#ffffff', fontWeight: 800, fontSize: '0.95rem' }}>LCĐ ATTT ADMIN</div>
-              <div style={{ color: '#38bdf8', fontSize: '0.7rem', fontWeight: 600 }}>CỔNG QUẢN TRỊ</div>
+              <div style={{ color: '#0f172a', fontWeight: 800, fontSize: '0.95rem', letterSpacing: '-0.01em' }}>
+                LCĐ ATTT
+              </div>
+              <div style={{ color: '#0284c7', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.04em' }}>
+                CỔNG QUẢN TRỊ
+              </div>
             </div>
           )}
         </div>
 
         {/* Navigation Menu filtered by permission */}
         <Menu
-          theme="dark"
+          theme="light"
           mode="inline"
           selectedKeys={[location.pathname]}
           items={visibleMenuItems}
           onClick={handleMenuClick}
-          style={{ background: '#0f172a', marginTop: '12px', fontSize: '0.92rem' }}
+          style={{ background: '#ffffff', marginTop: '12px', fontSize: '0.92rem', borderRight: 'none' }}
         />
       </Sider>
 
       {/* Main Layout Area */}
-      <Layout>
+      <Layout style={{ background: '#f8fafc' }}>
         {/* Header */}
         <Header
           style={{
@@ -235,13 +248,31 @@ export const AdminLayout: React.FC = () => {
                       style={{
                         fontSize: '0.7rem',
                         fontWeight: 700,
-                        padding: '1px 6px',
+                        padding: '2px 8px',
                         borderRadius: '4px',
-                        background: currentUser?.role === 'admin' ? '#e0f2fe' : currentUser?.role === 'recruiter' ? '#dcfce7' : '#f3e8ff',
-                        color: currentUser?.role === 'admin' ? '#0369a1' : currentUser?.role === 'recruiter' ? '#15803d' : '#7e22ce',
+                        background:
+                          currentUser?.role === 'admin'
+                            ? '#e0f2fe'
+                            : currentUser?.role === 'lead'
+                            ? '#f3e8ff'
+                            : '#dcfce7',
+                        color:
+                          currentUser?.role === 'admin'
+                            ? '#0369a1'
+                            : currentUser?.role === 'lead'
+                            ? '#7e22ce'
+                            : '#15803d',
                       }}
                     >
-                      {currentUser?.role === 'admin' ? 'Super Admin' : currentUser?.role === 'recruiter' ? 'Ban Tuyển CTV' : 'Ban Truyền Thông'}
+                      {currentUser?.role === 'admin'
+                        ? 'Super Admin'
+                        : currentUser?.role === 'lead'
+                        ? 'Trưởng ban'
+                        : currentUser?.role === 'interviewer'
+                        ? 'Cán bộ Phỏng vấn'
+                        : currentUser?.role === 'recruiter'
+                        ? 'Ban Tuyển CTV'
+                        : 'Ban Truyền Thông'}
                     </span>
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b' }}>

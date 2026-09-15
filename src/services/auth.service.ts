@@ -11,43 +11,6 @@ import { AdminUser, AdminRole } from '../types';
 
 const LOCAL_ADMIN_KEY = 'lcd_admin_session';
 
-// Pre-provisioned demo/offline staff accounts for role-based local testing
-export const DEMO_STAFF_ACCOUNTS: Record<
-  string,
-  { pass: string; user: AdminUser }
-> = {
-  'admin@lcdattt.edu.vn': {
-    pass: 'Admin@123',
-    user: {
-      uid: 'staff_super_admin',
-      email: 'admin@lcdattt.edu.vn',
-      displayName: 'Ban Quản Trị Cấp Cao',
-      role: 'admin',
-      permissions: ['dashboard', 'collaborators', 'activities', 'executive-members'],
-    },
-  },
-  'tuyendung@lcdattt.edu.vn': {
-    pass: 'TuyenDung@123',
-    user: {
-      uid: 'staff_recruiter_01',
-      email: 'tuyendung@lcdattt.edu.vn',
-      displayName: 'Cán Bộ Ban Tuyển CTV',
-      role: 'recruiter',
-      permissions: ['dashboard', 'collaborators'],
-    },
-  },
-  'truyenthong@lcdattt.edu.vn': {
-    pass: 'TruyenThong@123',
-    user: {
-      uid: 'staff_editor_01',
-      email: 'truyenthong@lcdattt.edu.vn',
-      displayName: 'Cán Bộ Ban Truyền Thông',
-      role: 'editor',
-      permissions: ['dashboard', 'activities', 'executive-members'],
-    },
-  },
-};
-
 // Role permissions mapping
 export const ROLE_PERMISSIONS: Record<
   AdminRole,
@@ -65,28 +28,57 @@ export const ROLE_PERMISSIONS: Record<
       '/admin/collaborators',
       '/admin/activities',
       '/admin/executive-members',
+      '/admin/accounts',
       '/admin/settings',
     ],
   },
+  lead: {
+    label: 'Trưởng ban',
+    description: 'Truy cập Tổng quan, Quản lý hồ sơ CTV, Hoạt động & Sự kiện và Ban Chấp hành',
+    allowedPaths: [
+      '/admin/dashboard',
+      '/admin/collaborators',
+      '/admin/activities',
+      '/admin/executive-members',
+    ],
+  },
+  interviewer: {
+    label: 'Cán bộ Phỏng vấn',
+    description: 'Được quyền truy cập tab Quản lý CTV (xem, đánh giá, chấm điểm phỏng vấn)',
+    allowedPaths: ['/admin/collaborators'],
+  },
   recruiter: {
     label: 'Cán bộ Tuyển CTV',
-    description: 'Chỉ có quyền xem Tổng quan và Quản lý hồ sơ ứng viên / CTV',
-    allowedPaths: ['/admin/dashboard', '/admin/collaborators'],
+    description: 'Chỉ có quyền xem Quản lý hồ sơ ứng viên / CTV',
+    allowedPaths: ['/admin/collaborators'],
   },
   editor: {
     label: 'Cán bộ Truyền thông',
-    description: 'Chỉ có quyền xem Tổng quan, Quản lý Hoạt động & Sự kiện và Ban Chấp hành',
-    allowedPaths: ['/admin/dashboard', '/admin/activities', '/admin/executive-members'],
+    description: 'Chỉ có quyền Quản lý Hoạt động & Sự kiện và Ban Chấp hành',
+    allowedPaths: ['/admin/activities', '/admin/executive-members'],
   },
 };
 
 // Helper to check if a user has permission to access a path
 export function hasPathPermission(user: AdminUser | null, pathname: string): boolean {
   if (!user) return false;
+
+  // The base admin root entry point is allowed for any authenticated staff user
+  if (pathname === '/admin' || pathname === '/admin/') {
+    return true;
+  }
+
+  // 1. If user has custom explicit permissions configured, STRICTLY enforce them!
+  if (Array.isArray(user.permissions)) {
+    return user.permissions.some((p) => pathname === p || pathname.startsWith(p + '/'));
+  }
+
+  // 2. Fallback: only if user has no explicit custom permissions configured
   if (user.role === 'admin') return true;
+
   const config = ROLE_PERMISSIONS[user.role];
   if (!config) return false;
-  return config.allowedPaths.some((p) => pathname.startsWith(p));
+  return config.allowedPaths.some((p) => pathname === p || pathname.startsWith(p + '/'));
 }
 
 export const authService = {
@@ -94,7 +86,7 @@ export const authService = {
   async login(email: string, pass: string): Promise<AdminUser> {
     const cleanEmail = email.trim().toLowerCase();
 
-    // 1. Try Firebase Authentication if configured
+    // Authenticate with Firebase Authentication
     if (isFirebaseConfigured && auth) {
       try {
         const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, pass);
@@ -107,15 +99,11 @@ export const authService = {
       } catch (fbErr: any) {
         console.error('Firebase Auth Login Error:', fbErr);
 
-        // If local demo account matches, allow it
-        const demo = DEMO_STAFF_ACCOUNTS[cleanEmail];
-        if (demo && demo.pass === pass) {
-          localStorage.setItem(LOCAL_ADMIN_KEY, JSON.stringify(demo.user));
-          return demo.user;
-        }
-
         let errMsg = 'Email hoặc mật khẩu không chính xác.';
-        if (fbErr.code === 'auth/user-not-found') {
+        if (fbErr.code === 'auth/admin-restricted-operation') {
+          errMsg =
+            'Chưa bật phương thức tạo tài khoản';
+        } else if (fbErr.code === 'auth/user-not-found') {
           errMsg = 'Tài khoản không tồn tại trên hệ thống. Vui lòng kiểm tra lại email.';
         } else if (
           fbErr.code === 'auth/wrong-password' ||
@@ -134,16 +122,9 @@ export const authService = {
       }
     }
 
-    // 2. Demo / Offline Mode authentication fallback
-    const demo = DEMO_STAFF_ACCOUNTS[cleanEmail];
-    if (demo && demo.pass === pass) {
-      localStorage.setItem(LOCAL_ADMIN_KEY, JSON.stringify(demo.user));
-      return demo.user;
-    } else {
-      throw new Error(
-        'Email hoặc mật khẩu không chính xác. Tài khoản phải được cấp bởi Ban Quản trị.'
-      );
-    }
+    throw new Error(
+      'Hệ thống xác thực Firebase chưa được kết nối. Vui lòng cấu hình biến môi trường Firebase.'
+    );
   },
 
   // Resolve user role & permissions from Firestore 'users' collection or custom claims
@@ -156,7 +137,7 @@ export const authService = {
         const tokenResult: IdTokenResult = await user.getIdTokenResult();
         if (tokenResult.claims.role) {
           const role = tokenResult.claims.role as AdminRole;
-          if (['admin', 'recruiter', 'editor'].includes(role)) {
+          if (['admin', 'lead', 'interviewer', 'recruiter', 'editor'].includes(role)) {
             return {
               uid: user.uid,
               email: user.email,
@@ -214,7 +195,7 @@ export const authService = {
         // If user document found in Firestore, use its role
         if (userDocData) {
           const rawRole = (userDocData.role || 'admin').toLowerCase();
-          const validRole: AdminRole = ['admin', 'recruiter', 'editor'].includes(rawRole)
+          const validRole: AdminRole = ['admin', 'lead', 'interviewer', 'recruiter', 'editor'].includes(rawRole)
             ? (rawRole as AdminRole)
             : 'admin';
 
@@ -227,6 +208,8 @@ export const authService = {
               email.split('@')[0] ||
               'Cán bộ LCĐ',
             role: validRole,
+            departmentId: userDocData.departmentId || null,
+            departmentName: userDocData.departmentName || null,
             permissions:
               userDocData.permissions || ROLE_PERMISSIONS[validRole]?.allowedPaths || [],
           };

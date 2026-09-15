@@ -55,6 +55,11 @@ export const ProtectedRoute: React.FC = () => {
 
   if (!isAllowed) {
     const roleInfo = ROLE_PERMISSIONS[currentUser.role]?.label || currentUser.role;
+    const allowedList = currentUser.permissions || ROLE_PERMISSIONS[currentUser.role]?.allowedPaths || [];
+    const fallbackPath =
+      allowedList.find((p) => p !== location.pathname && hasPathPermission(currentUser, p)) ||
+      '/admin/collaborators';
+
     return (
       <div style={{ padding: '80px 20px', textAlign: 'center' }}>
         <Result
@@ -63,12 +68,12 @@ export const ProtectedRoute: React.FC = () => {
           subTitle={`Tài khoản của bạn (${currentUser.email} • Phân quyền: ${roleInfo}) không có quyền truy cập vào chức năng này.`}
           extra={[
             <Button
-              key="dashboard"
+              key="back"
               type="primary"
-              onClick={() => (window.location.href = '/admin/dashboard')}
+              onClick={() => (window.location.href = fallbackPath)}
               style={{ background: '#0284c7' }}
             >
-              Quay về Trang Tổng quan
+              Quay về chức năng được cấp quyền
             </Button>,
             <Button
               key="switch"

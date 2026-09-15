@@ -253,7 +253,7 @@ export const HomePage: React.FC = () => {
             <Row gutter={[24, 24]} justify="center">
               <Col xs={12} sm={6} style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 'clamp(2rem, 3.5vw, 2.7rem)', fontWeight: 800, color: '#0284c7', lineHeight: 1.1 }}>
-                  {settings?.totalStudents || 850}+
+                  {settings?.totalStudents ? `${settings.totalStudents}+` : '0'}
                 </div>
                 <div style={{ color: '#64748b', fontSize: '0.95rem', fontWeight: 600, marginTop: '6px' }}>
                   Sinh viên
@@ -261,7 +261,7 @@ export const HomePage: React.FC = () => {
               </Col>
               <Col xs={12} sm={6} style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 'clamp(2rem, 3.5vw, 2.7rem)', fontWeight: 800, color: '#0d9488', lineHeight: 1.1 }}>
-                  {settings?.totalActivities || 40}+
+                  {settings?.totalActivities ? `${settings.totalActivities}+` : '0'}
                 </div>
                 <div style={{ color: '#64748b', fontSize: '0.95rem', fontWeight: 600, marginTop: '6px' }}>
                   Hoạt động đã tổ chức
@@ -269,7 +269,7 @@ export const HomePage: React.FC = () => {
               </Col>
               <Col xs={12} sm={6} style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 'clamp(2rem, 3.5vw, 2.7rem)', fontWeight: 800, color: '#3b82f6', lineHeight: 1.1 }}>
-                  {settings?.totalCollaborators || 50}+
+                  {settings?.totalCollaborators ? `${settings.totalCollaborators}+` : '0'}
                 </div>
                 <div style={{ color: '#64748b', fontSize: '0.95rem', fontWeight: 600, marginTop: '6px' }}>
                   Cộng tác viên
@@ -277,7 +277,7 @@ export const HomePage: React.FC = () => {
               </Col>
               <Col xs={12} sm={6} style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 'clamp(2rem, 3.5vw, 2.7rem)', fontWeight: 800, color: '#f59e0b', lineHeight: 1.1 }}>
-                  {settings?.activeYears || 10}+
+                  {settings?.activeYears ? `${settings.activeYears}+` : '1+'}
                 </div>
                 <div style={{ color: '#64748b', fontSize: '0.95rem', fontWeight: 600, marginTop: '6px' }}>
                   Năm hoạt động

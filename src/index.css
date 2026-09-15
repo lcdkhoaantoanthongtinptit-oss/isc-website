@@ -175,10 +175,10 @@ h1, h2, h3, h4, h5, h6 {
   background: #94a3b8;
 }
 
-/* Admin Sider Scrollbar & Sticky */
+/* Admin Sider Scrollbar & Modern Light Theme */
 .admin-sider-desktop {
   scrollbar-width: thin;
-  scrollbar-color: #334155 transparent;
+  scrollbar-color: #cbd5e1 transparent;
 }
 
 .admin-sider-desktop::-webkit-scrollbar {
@@ -190,6 +190,40 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .admin-sider-desktop::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #cbd5e1;
   border-radius: 4px;
 }
+
+.admin-sider-desktop .ant-layout-sider-trigger {
+  background: #ffffff !important;
+  color: #64748b !important;
+  border-top: 1px solid #f1f5f9 !important;
+  border-right: 1px solid #e2e8f0 !important;
+  transition: all 0.2s ease;
+}
+
+.admin-sider-desktop .ant-layout-sider-trigger:hover {
+  background: #f8fafc !important;
+  color: #0284c7 !important;
+}
+
+.admin-sider-desktop .ant-menu-light .ant-menu-item {
+  border-radius: 8px !important;
+  margin: 4px 10px !important;
+  width: calc(100% - 20px) !important;
+  font-weight: 500;
+  color: #475569;
+  transition: all 0.2s ease;
+}
+
+.admin-sider-desktop .ant-menu-light .ant-menu-item:hover {
+  color: #0284c7 !important;
+  background-color: #f0f9ff !important;
+}
+
+.admin-sider-desktop .ant-menu-light .ant-menu-item-selected {
+  background-color: #e0f2fe !important;
+  color: #0284c7 !important;
+  font-weight: 600 !important;
+}
+

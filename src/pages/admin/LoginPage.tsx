@@ -2,25 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Form, Input, Button, message, Alert, Typography } from 'antd';
 import { ArrowLeft, Lock, Mail, ShieldCheck, KeyRound, Info } from 'lucide-react';
-import { authService, ROLE_PERMISSIONS } from '../../services/auth.service';
+import { authService, hasPathPermission, ROLE_PERMISSIONS } from '../../services/auth.service';
+import { AdminRole } from '../../types';
 import logoImg from '../../assets/logo.png';
 
 const { Text } = Typography;
 
 export const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
-  const [showDemoAccounts, setShowDemoAccounts] = useState(false);
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const resolveRedirectPath = (user: any, requestedPath?: string) => {
+    if (requestedPath && requestedPath !== '/admin/login' && hasPathPermission(user, requestedPath)) {
+      return requestedPath;
+    }
+    if (hasPathPermission(user, '/admin/dashboard')) {
+      return '/admin/dashboard';
+    }
+    const allowed = user.permissions || ROLE_PERMISSIONS[user.role as AdminRole]?.allowedPaths || [];
+    return allowed.find((p: string) => hasPathPermission(user, p)) || '/admin/collaborators';
+  };
 
   // Redirect if already logged in
   useEffect(() => {
     async function checkExisting() {
       const user = await authService.getCurrentUser();
       if (user) {
-        const from = (location.state as any)?.from?.pathname || '/admin/dashboard';
-        navigate(from, { replace: true });
+        const from = (location.state as any)?.from?.pathname;
+        navigate(resolveRedirectPath(user, from), { replace: true });
       }
     }
     checkExisting();
@@ -31,18 +42,14 @@ export const LoginPage: React.FC = () => {
       setLoading(true);
       const user = await authService.login(values.email, values.pass);
       message.success(`Đăng nhập thành công! Quyền hạn: ${ROLE_PERMISSIONS[user.role]?.label || user.role}`);
-      const from = (location.state as any)?.from?.pathname || '/admin/dashboard';
-      navigate(from, { replace: true });
+      const from = (location.state as any)?.from?.pathname;
+      navigate(resolveRedirectPath(user, from), { replace: true });
     } catch (err: any) {
       console.error('Login error:', err);
       message.error(err.message || 'Đăng nhập không thành công.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const fillCredentials = (email: string, pass: string) => {
-    form.setFieldsValue({ email, pass });
   };
 
   return (

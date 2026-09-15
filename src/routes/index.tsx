@@ -17,7 +17,34 @@ import { DashboardPage } from '../pages/admin/DashboardPage';
 import { CollaboratorsPage } from '../pages/admin/CollaboratorsPage';
 import { ActivitiesAdminPage } from '../pages/admin/ActivitiesAdminPage';
 import { ExecutiveMembersPage } from '../pages/admin/ExecutiveMembersPage';
+import { AccountsAdminPage } from '../pages/admin/AccountsAdminPage';
 import { SettingsPage } from '../pages/admin/SettingsPage';
+import { authService, hasPathPermission, ROLE_PERMISSIONS } from '../services/auth.service';
+
+const AdminIndexRedirect: React.FC = () => {
+  const [target, setTarget] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    async function check() {
+      const user = await authService.getCurrentUser();
+      if (!user) {
+        setTarget('/admin/login');
+        return;
+      }
+      if (hasPathPermission(user, '/admin/dashboard')) {
+        setTarget('/admin/dashboard');
+        return;
+      }
+      const allowed = user.permissions || ROLE_PERMISSIONS[user.role]?.allowedPaths || [];
+      const firstAllowed = allowed.find((p) => hasPathPermission(user, p)) || '/admin/collaborators';
+      setTarget(firstAllowed);
+    }
+    check();
+  }, []);
+
+  if (!target) return null;
+  return <Navigate to={target} replace />;
+};
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -40,11 +67,13 @@ export const AppRoutes: React.FC = () => {
       {/* 3. Protected Admin Routes */}
       <Route path="/admin" element={<ProtectedRoute />}>
         <Route element={<AdminLayout />}>
-          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+          <Route index element={<AdminIndexRedirect />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="collaborators" element={<CollaboratorsPage />} />
           <Route path="activities" element={<ActivitiesAdminPage />} />
           <Route path="executive-members" element={<ExecutiveMembersPage />} />
+          {/* Quản lý tài khoản cán bộ */}
+          <Route path="accounts" element={<AccountsAdminPage />} />
           {/* Cài đặt website & Công khai kết quả */}
           <Route path="settings" element={<SettingsPage />} />
         </Route>
