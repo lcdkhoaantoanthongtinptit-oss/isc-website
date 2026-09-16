@@ -12,7 +12,6 @@ import {
   Lock,
   Bell,
   GraduationCap,
-  Mail,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import confetti from 'canvas-confetti';
@@ -261,7 +260,7 @@ export const CheckResultPage: React.FC = () => {
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         footer={null}
-        width={980}
+        width={640}
         centered
         destroyOnClose
         style={{ borderRadius: '20px', overflow: 'hidden' }}
@@ -290,109 +289,200 @@ export const CheckResultPage: React.FC = () => {
 
             {/* CASE 2: PENDING */}
             {result.found && result.status === 'PENDING' && (
-              <div style={{ padding: '40px 32px', textAlign: 'center', backgroundColor: '#ffffff' }}>
-                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#e0f2fe', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
-                  <Clock size={34} />
-                </div>
-                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>Kết quả đang được cập nhật</h3>
-                <p style={{ color: '#475569', fontSize: '1.05rem', lineHeight: 1.6, marginBottom: '20px' }}>
-                  Hồ sơ ứng viên <strong>{result.fullName}</strong> ({result.studentId}) đang trong quá trình xét duyệt hoặc phỏng vấn đợt bổ sung.
-                </p>
-                {result.note && (
-                  <div style={{ padding: '16px 20px', background: '#f8fafc', borderRadius: '12px', fontSize: '0.92rem', color: '#334155', textAlign: 'left', marginBottom: '20px' }}>
-                    <strong style={{ color: '#0284c7' }}>Thông báo từ Ban Giám khảo:</strong> {result.note}
+              <div style={{ padding: '36px 32px', backgroundColor: '#ffffff', position: 'relative' }}>
+                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                  <div style={{ display: 'inline-block', background: '#e0f2fe', color: '#0369a1', fontWeight: 800, fontSize: '0.8rem', letterSpacing: '0.06em', padding: '4px 14px', borderRadius: '9999px', marginBottom: '8px' }}>
+                    KẾT QUẢ VÒNG CV • TUYỂN CTV GEN 2.0
                   </div>
-                )}
-                <div style={{ marginBottom: '24px' }}>
-                  <Tag color="processing" style={{ padding: '6px 18px', fontSize: '0.92rem', borderRadius: '6px', fontWeight: 600 }}>Trạng thái: Đang chờ kết quả</Tag>
+                  <h2 style={{ fontSize: 'clamp(1.5rem,3.2vw,1.9rem)', fontWeight: 900, color: '#0f172a', margin: 0 }}>
+                    KẾT QUẢ ĐANG ĐƯỢC CẬP NHẬT
+                  </h2>
                 </div>
-                <Button type="primary" style={{ background: '#0284c7', fontWeight: 600, height: '42px', padding: '0 28px' }} onClick={() => setIsModalOpen(false)}>Đã hiểu</Button>
+
+                <div style={{ background: '#f8fafc', borderRadius: '10px', padding: '10px 16px', border: '1px solid #f1f5f9', marginBottom: '22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                  <div>
+                    <span style={{ fontSize: '0.82rem', color: '#64748b' }}>Ứng viên: </span>
+                    <strong style={{ color: '#0f172a', fontSize: '0.98rem' }}>{result.fullName}</strong>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.82rem', color: '#64748b' }}>MSSV: </span>
+                    <strong style={{ color: '#0284c7', fontSize: '0.98rem', letterSpacing: '0.04em' }}>{result.studentId}</strong>
+                  </div>
+                </div>
+
+                {/* Letter Content - no card boxes, elegant typography with colored text */}
+                <div style={{ color: '#334155', fontSize: '0.96rem', lineHeight: 1.75, textAlign: 'left' }}>
+                  <p style={{ fontWeight: 700, fontSize: '1.02rem', color: '#0f172a', marginBottom: '12px' }}>
+                    Chào <span style={{ color: '#0284c7', fontWeight: 800 }}>{result.fullName}</span>,
+                  </p>
+
+                  <p style={{ color: '#0284c7', fontWeight: 700, fontSize: '1.02rem', lineHeight: 1.6, margin: '14px 0' }}>
+                    Hồ sơ của bạn đang trong quá trình xét duyệt hoặc xếp lịch phỏng vấn đợt bổ sung.
+                  </p>
+
+                  <p style={{ marginBottom: '14px', color: '#334155' }}>
+                    Ban tuyển dụng Liên chi Đoàn Khoa An toàn thông tin đang tích cực hoàn tất các bước đánh giá. Kết quả chính thức sẽ được cập nhật sớm nhất tại đây hoặc qua email của bạn.
+                  </p>
+
+                  {result.note && (
+                    <p style={{ marginBottom: '14px', color: '#334155' }}>
+                      <strong style={{ color: '#0284c7' }}>Thông báo từ Ban Giám khảo:</strong> {result.note}
+                    </p>
+                  )}
+
+                  <p style={{ margin: '16px 0', fontSize: '0.95rem' }}>
+                    <span style={{ color: '#64748b', fontWeight: 600 }}>Trạng thái: </span>
+                    <span style={{ color: '#0284c7', fontWeight: 700 }}>Đang chờ kết quả</span>
+                  </p>
+
+                  <div style={{ textAlign: 'right', marginTop: '20px' }}>
+                    <div style={{ fontStyle: 'italic', color: '#64748b', fontSize: '0.92rem' }}>Thân mến,</div>
+                    <div style={{ fontWeight: 800, color: '#0284c7', fontSize: '1.02rem', marginTop: '3px' }}>
+                      Liên chi Đoàn Khoa An toàn thông tin
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '28px', paddingTop: '18px', borderTop: '1px solid #f1f5f9' }}>
+                  <Button type="primary" size="large" style={{ background: '#0284c7', fontWeight: 600, height: '44px', padding: '0 32px', borderRadius: '10px' }} onClick={() => setIsModalOpen(false)}>
+                    Đã hiểu
+                  </Button>
+                </div>
               </div>
             )}
 
             {/* CASE 3: FAILED */}
             {result.found && result.status === 'FAILED' && (
-              <div style={{ padding: '40px 32px', textAlign: 'center', backgroundColor: '#ffffff' }}>
-                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#f1f5f9', color: '#b95748ff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
-                  <XCircle size={34} />
+              <div style={{ padding: '36px 32px', backgroundColor: '#ffffff', position: 'relative' }}>
+                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+
+                  <div style={{ display: 'inline-block', background: '#f1f5f9', color: '#475569', fontWeight: 800, fontSize: '0.8rem', letterSpacing: '0.06em', padding: '4px 14px', borderRadius: '9999px', marginBottom: '8px' }}>
+                    KẾT QUẢ VÒNG CV • TUYỂN CTV GEN 2.0
+                  </div>
+                  <h2 style={{ fontSize: 'clamp(1.5rem,3.2vw,1.9rem)', fontWeight: 900, color: '#0f172a', margin: 0 }}>
+                    THÔNG BÁO KẾT QUẢ ỨNG TUYỂN
+                  </h2>
                 </div>
-                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>Thông báo kết quả ứng tuyển</h3>
-                <p style={{ color: '#475569', fontSize: '1.05rem', lineHeight: 1.6, marginBottom: '16px' }}>Rất tiếc, bạn chưa có tên trong danh sách trúng tuyển đợt này.</p>
-                <div style={{ padding: '18px 20px', background: '#f8fafc', borderRadius: '12px', fontSize: '0.92rem', color: '#475569', lineHeight: 1.6, textAlign: 'left', marginBottom: '24px' }}>
-                  Chào <strong>{result.fullName}</strong>, Liên chi đoàn Khoa An toàn thông tin xin chân thành cảm ơn sự quan tâm và thời gian bạn đã dành để tham gia ứng tuyển đợt này. Do số lượng chỉ tiêu có hạn, chúng mình rất tiếc chưa thể đồng hành cùng bạn với tư cách CTV chính thức.
-                  <br /><br />
-                  {result.note || 'Hy vọng sẽ sớm gặp lại bạn tại các buổi Workshop, giải đấu CTF và các sự kiện mở sắp tới của Khoa ATTT!'}
+
+                <div style={{ background: '#f8fafc', borderRadius: '10px', padding: '10px 16px', border: '1px solid #f1f5f9', marginBottom: '22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                  <div>
+                    <span style={{ fontSize: '0.82rem', color: '#64748b' }}>Ứng viên: </span>
+                    <strong style={{ color: '#0f172a', fontSize: '0.98rem' }}>{result.fullName}</strong>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.82rem', color: '#64748b' }}>MSSV: </span>
+                    <strong style={{ color: '#0284c7', fontSize: '0.98rem', letterSpacing: '0.04em' }}>{result.studentId}</strong>
+                  </div>
                 </div>
-                <div style={{ marginBottom: '24px' }}>
-                  <Tag color="default" style={{ padding: '6px 18px', fontSize: '0.92rem', borderRadius: '6px', fontWeight: 600 }}>Trạng thái: Chưa trúng tuyển</Tag>
+
+                {/* Letter Content - no card boxes, elegant typography with colored text */}
+                <div style={{ color: '#334155', fontSize: '0.96rem', lineHeight: 1.75, textAlign: 'left' }}>
+                  <p style={{ fontWeight: 700, fontSize: '1.02rem', color: '#0f172a', marginBottom: '12px' }}>
+                    Chào <span style={{ color: '#0284c7', fontWeight: 800 }}>{result.fullName}</span>,
+                  </p>
+
+                  <p style={{ color: '#e11d48', fontWeight: 800, fontSize: '1.05rem', lineHeight: 1.6, margin: '14px 0' }}>
+                    Rất tiếc, bạn chưa có tên trong danh sách trúng tuyển đợt này.
+                  </p>
+
+                  <p style={{ marginBottom: '14px', color: '#334155' }}>
+                    Liên chi đoàn Khoa An toàn thông tin xin chân thành cảm ơn sự quan tâm và thời gian bạn đã dành để tham gia ứng tuyển đợt này. Do số lượng chỉ tiêu có hạn, chúng mình rất tiếc chưa thể đồng hành cùng bạn với tư cách CTV chính thức.
+                  </p>
+
+                  <p style={{ marginBottom: '14px', color: '#334155' }}>
+                    {result.note || 'Hy vọng sẽ sớm gặp lại bạn tại các buổi Workshop, giải đấu CTF và các sự kiện mở sắp tới của Khoa ATTT!'}
+                  </p>
+
+                  <p style={{ margin: '16px 0', fontSize: '0.95rem' }}>
+                    <span style={{ color: '#64748b', fontWeight: 600 }}>Trạng thái: </span>
+                    <span style={{ color: '#e11d48', fontWeight: 700 }}>Chưa trúng tuyển</span>
+                  </p>
+
+                  <div style={{ textAlign: 'right', marginTop: '20px' }}>
+                    <div style={{ fontStyle: 'italic', color: '#64748b', fontSize: '0.92rem' }}>Thân mến,</div>
+                    <div style={{ fontWeight: 800, color: '#0284c7', fontSize: '1.02rem', marginTop: '3px' }}>
+                      Liên chi Đoàn Khoa An toàn thông tin
+                    </div>
+                  </div>
                 </div>
-                <Button type="primary" style={{ background: '#0284c7', fontWeight: 600, height: '42px', padding: '0 28px' }} onClick={() => setIsModalOpen(false)}>Đóng thông báo</Button>
+
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '28px', paddingTop: '18px', borderTop: '1px solid #f1f5f9' }}>
+                  <Button type="primary" size="large" style={{ background: '#0284c7', fontWeight: 600, height: '44px', padding: '0 32px', borderRadius: '10px' }} onClick={() => setIsModalOpen(false)}>
+                    Đóng thông báo
+                  </Button>
+                </div>
               </div>
             )}
 
             {/* CASE 4: PASSED */}
             {result.found && result.status === 'PASSED' && (
-              <div style={{ padding: '36px 28px', backgroundColor: '#ffffff', position: 'relative' }}>
-                <div style={{ textAlign: 'center', marginBottom: '22px' }}>
-                  <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#10b981', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', boxShadow: '0 8px 20px rgba(16,185,129,0.25)' }}>
-                    <Sparkles size={34} />
-                  </div>
-                  <div style={{ display: 'inline-block', background: '#dcfce7', color: '#15803d', fontWeight: 800, fontSize: '0.82rem', letterSpacing: '0.06em', padding: '4px 14px', borderRadius: '9999px', marginBottom: '8px' }}>
+              <div style={{ padding: '36px 32px', backgroundColor: '#ffffff', position: 'relative' }}>
+                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                  <div style={{ display: 'inline-block', background: '#dcfce7', color: '#15803d', fontWeight: 800, fontSize: '0.8rem', letterSpacing: '0.06em', padding: '4px 14px', borderRadius: '9999px', marginBottom: '8px' }}>
                     KẾT QUẢ VÒNG CV • TUYỂN CTV GEN 2.0
                   </div>
-                  <h2 style={{ fontSize: 'clamp(1.7rem,3.2vw,2.1rem)', fontWeight: 900, color: '#15803d', margin: '0 0 6px' }}>CHÚC MỪNG BẠN!</h2>
-                  <p style={{ color: '#475569', fontSize: '0.96rem', margin: 0, fontWeight: 600 }}>
-                    Bạn đã chính thức vượt qua vòng CV và tiến vào vòng phỏng vấn của Liên chi Đoàn!
-                  </p>
+                  <h2 style={{ fontSize: 'clamp(1.6rem,3.2vw,2rem)', fontWeight: 900, color: '#15803d', margin: 0 }}>
+                    CHÚC MỪNG BẠN!
+                  </h2>
                 </div>
 
-                <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '14px 18px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', marginBottom: '18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                <div style={{ background: '#f8fafc', borderRadius: '10px', padding: '10px 16px', border: '1px solid #f1f5f9', marginBottom: '22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                   <div>
-                    <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Ứng viên: </span>
-                    <strong style={{ color: '#0f172a', fontSize: '1rem' }}>{result.fullName}</strong>
-                    <span style={{ margin: '0 8px', color: '#cbd5e1' }}>•</span>
-                    <span style={{ fontSize: '0.8rem', color: '#64748b' }}>MSSV: </span>
-                    <strong style={{ color: '#0284c7', fontSize: '1rem' }}>{result.studentId}</strong>
+                    <span style={{ fontSize: '0.82rem', color: '#64748b' }}>Ứng viên: </span>
+                    <strong style={{ color: '#0f172a', fontSize: '0.98rem' }}>{result.fullName}</strong>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.82rem', color: '#64748b' }}>MSSV: </span>
+                    <strong style={{ color: '#0284c7', fontSize: '0.98rem', letterSpacing: '0.04em' }}>{result.studentId}</strong>
                   </div>
                 </div>
 
-                <div style={{ background: '#ffffff', borderRadius: '14px', padding: '24px 22px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', color: '#1e293b', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: '20px' }}>
-                  <p style={{ fontWeight: 700, marginBottom: '12px' }}>Xin chào bạn <span style={{ color: '#0284c7' }}>{result.fullName}</span>,</p>
-                  <p style={{ marginBottom: '12px' }}>Lời đầu tiên, LCĐ Khoa An toàn thông tin xin cảm ơn sự quan tâm của bạn dành cho đợt tuyển CTV Gen 2.0.</p>
-                  <p style={{ marginBottom: '12px' }}>
+                {/* Letter Content - no card boxes, elegant typography with colored text */}
+                <div style={{ color: '#334155', fontSize: '0.96rem', lineHeight: 1.75, textAlign: 'left' }}>
+                  <p style={{ fontWeight: 700, fontSize: '1.02rem', color: '#0f172a', marginBottom: '12px' }}>
+                    Xin chào bạn <span style={{ color: '#0284c7', fontWeight: 800 }}>{result.fullName}</span>,
+                  </p>
+
+                  <p style={{ marginBottom: '12px', color: '#334155' }}>
+                    Lời đầu tiên, LCĐ Khoa An toàn thông tin xin cảm ơn sự quan tâm của bạn dành cho đợt tuyển CTV Gen 2.0.
+                  </p>
+
+                  <p style={{ marginBottom: '12px', color: '#334155' }}>
                     Sau quá trình xem xét và đánh giá hồ sơ, chúng mình rất vui mừng thông báo:
                   </p>
-                  <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '12px', padding: '14px 18px', marginBottom: '16px', textAlign: 'center' }}>
-                    <span style={{ color: '#059669', fontWeight: 800, fontSize: '1.05rem', display: 'block' }}>
-                      🎉 Bạn đã chính thức vượt qua vòng CV và tiến vào vòng phỏng vấn của Liên chi Đoàn!
-                    </span>
-                  </div>
-                  <p style={{ marginBottom: '14px' }}>
+
+                  <p style={{ color: '#059669', fontWeight: 800, fontSize: '1.05rem', lineHeight: 1.6, margin: '14px 0' }}>
+                    🎉 Bạn đã chính thức vượt qua vòng CV và tiến vào vòng phỏng vấn của Liên chi Đoàn!
+                  </p>
+
+                  <p style={{ marginBottom: '14px', color: '#334155' }}>
                     Chúng mình đánh giá cao sự phù hợp của bạn với định hướng hoạt động của Liên chi. Hy vọng buổi phỏng vấn sẽ là cơ hội để chúng mình lắng nghe thêm những chia sẻ của bạn và để hai bên hiểu nhau hơn.
                   </p>
 
-                  <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '12px', padding: '16px 18px', marginBottom: '16px', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                    <Mail size={22} color="#0284c7" style={{ flexShrink: 0, marginTop: '2px' }} />
-                    <div style={{ color: '#0369a1', fontSize: '0.94rem', lineHeight: 1.6 }}>
-                      <strong style={{ color: '#0284c7' }}>Thời gian phỏng vấn sẽ được thông báo sau qua email.</strong> Bạn hãy thường xuyên kiểm tra hộp thư để cập nhật thông tin nhé!
-                    </div>
-                  </div>
+                  <p style={{ marginBottom: '14px', color: '#334155', lineHeight: 1.65 }}>
+                    <span style={{ color: '#0284c7', fontWeight: 700 }}>Thời gian phỏng vấn sẽ được thông báo sau qua email.</span>{' '}
+                    <span>Bạn hãy thường xuyên kiểm tra hộp thư để cập nhật thông tin nhé!</span>
+                  </p>
 
-                  <p style={{ marginBottom: '16px', fontWeight: 600, color: '#0f172a' }}>
+                  <p style={{ marginBottom: '22px', fontWeight: 700, color: '#0f172a' }}>
                     Chúc bạn chuẩn bị thật tốt và tự tin bước vào vòng phỏng vấn!
                   </p>
 
                   <div style={{ textAlign: 'right', marginTop: '20px' }}>
-                    <div style={{ fontStyle: 'italic', color: '#64748b' }}>Thân mến,</div>
-                    <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '1rem' }}>Liên chi Đoàn Khoa An toàn thông tin</div>
+                    <div style={{ fontStyle: 'italic', color: '#64748b', fontSize: '0.92rem' }}>Thân mến,</div>
+                    <div style={{ fontWeight: 800, color: '#0284c7', fontSize: '1.02rem', marginTop: '3px' }}>
+                      Liên chi Đoàn Khoa An toàn thông tin
+                    </div>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
-                  <Button type="primary" size="large" style={{ background: '#10b981', fontWeight: 700, height: '44px', padding: '0 24px' }} onClick={triggerConfetti}>
-                    Bắn pháo hoa chúc mừng 🎉
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '28px', paddingTop: '18px', borderTop: '1px solid #f1f5f9' }}>
+                  <Button type="primary" size="large" style={{ background: '#10b981', fontWeight: 700, height: '44px', padding: '0 24px', borderRadius: '10px' }} onClick={triggerConfetti}>
+                    Bắn pháo hoa 🎉
                   </Button>
-                  <Button size="large" style={{ height: '44px', padding: '0 24px', fontWeight: 600 }} onClick={() => setIsModalOpen(false)}>Đóng</Button>
+                  <Button size="large" style={{ height: '44px', padding: '0 24px', fontWeight: 600, borderRadius: '10px' }} onClick={() => setIsModalOpen(false)}>
+                    Đóng
+                  </Button>
                 </div>
               </div>
             )}
