@@ -157,6 +157,7 @@ export interface ExcelCollaboratorRow {
   accepted_department?: string;
   position?: string;
   status?: string;
+  interview_status?: string;
   note?: string;
   admin_note?: string;
   // Google Form questionnaire fields:

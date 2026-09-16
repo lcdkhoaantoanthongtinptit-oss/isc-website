@@ -1,8 +1,121 @@
 import * as XLSX from 'xlsx';
-import { Collaborator, Department, ExcelCollaboratorRow, ExcelValidationError } from '../types';
+import {
+  Collaborator,
+  CollaboratorStatus,
+  InterviewStatus,
+  Department,
+  ExcelCollaboratorRow,
+  ExcelValidationError,
+} from '../types';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const VALID_STATUSES = ['PENDING', 'PASSED', 'FAILED'];
+const VALID_STATUSES: CollaboratorStatus[] = ['PENDING', 'PASSED', 'FAILED'];
+
+/**
+ * Chuẩn hóa trạng thái CTV từ Excel sang CollaboratorStatus.
+ * Hỗ trợ linh hoạt cả tiếng Việt (có dấu / không dấu) và tiếng Anh:
+ * - Trúng tuyển / Đạt / Đậu / Pass / Passed / Accepted -> 'PASSED'
+ * - Không trúng tuyển / Không đạt / Trượt / Rớt / Fail / Failed / Rejected -> 'FAILED'
+ * - Đang chờ / Chờ duyệt / Chờ / Chưa duyệt / Pending / Chưa phỏng vấn -> 'PENDING'
+ * - Bỏ trống / null / undefined -> 'PENDING' (mặc định)
+ * Nếu nhập giá trị không hợp lệ -> trả về null để hiển thị thông báo lỗi chi tiết
+ */
+export function normalizeCollaboratorStatus(raw: any): CollaboratorStatus | null {
+  if (raw === undefined || raw === null) return 'PENDING';
+  const str = String(raw).trim();
+  if (!str) return 'PENDING';
+
+  const lower = str.toLowerCase();
+  const normalized = lower
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '');
+
+  // 1. PASSED / Trúng tuyển / Đạt
+  if (
+    [
+      'passed',
+      'pass',
+      'trungtuyen',
+      'dat',
+      'dau',
+      'accepted',
+      'accept',
+      'duocnhan',
+      'thongqua',
+      'trung',
+      'thanhcong',
+    ].includes(normalized)
+  ) {
+    return 'PASSED';
+  }
+
+  // 2. FAILED / Không trúng tuyển / Không đạt / Trượt
+  if (
+    [
+      'failed',
+      'fail',
+      'khongtrungtuyen',
+      'khongdat',
+      'truot',
+      'rot',
+      'rejected',
+      'reject',
+      'loai',
+      'biloai',
+      'tuchoi',
+      'khongnhan',
+    ].includes(normalized)
+  ) {
+    return 'FAILED';
+  }
+
+  // 3. PENDING / Đang chờ
+  if (
+    [
+      'pending',
+      'dangcho',
+      'choduyet',
+      'cho',
+      'chuaduyet',
+      'dangxuly',
+      'dangxet',
+      'chuaphongvan',
+      'dangphongvan',
+      'canxemxet',
+    ].includes(normalized)
+  ) {
+    return 'PENDING';
+  }
+
+  return null;
+}
+
+/**
+ * Chuẩn hóa trạng thái phỏng vấn nếu có trong file Excel.
+ * Mặc định khi import luôn là 'CHUA_PV' (Chưa phỏng vấn), kể cả các bạn Trúng tuyển (PASSED).
+ */
+export function normalizeInterviewStatus(raw: any, _collabStatus?: CollaboratorStatus): InterviewStatus {
+  if (raw !== undefined && raw !== null) {
+    const str = String(raw).trim();
+    if (str) {
+      const normalized = str
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]/g, '');
+
+      if (['dat', 'datphongvan', 'pass', 'passed'].includes(normalized)) return 'DAT';
+      if (['khongdat', 'fail', 'failed', 'truot', 'rot'].includes(normalized)) return 'KHONG_DAT';
+      if (['dangpv', 'dangphongvan', 'interviewing'].includes(normalized)) return 'DANG_PV';
+      if (['canxemxet', 'xemxet', 'review'].includes(normalized)) return 'CAN_XEM_XET';
+      if (['chuapv', 'chuaphongvan', 'pending'].includes(normalized)) return 'CHUA_PV';
+    }
+  }
+
+  // Mặc định luôn là 'CHUA_PV' (Chưa phỏng vấn)
+  return 'CHUA_PV';
+}
 
 /**
  * Chuẩn hóa số điện thoại: Luôn giữ hoặc khôi phục số 0 đầu tiên.
@@ -259,9 +372,53 @@ export const excelService = {
             const position =
               extractRowValue(row, ['Vị trí', 'position'], ['vitri', 'position']) || 'Cộng tác viên';
 
-            const status =
-              extractRowValue(row, ['Trạng thái', 'status'], ['trangthai', 'status']).toUpperCase() ||
-              'PENDING';
+            // 15. Trạng thái CTV (Hỗ trợ nhiều biến thể tên cột tiếng Việt và tiếng Anh)
+            const status = extractRowValue(
+              row,
+              [
+                'Trạng thái CTV',
+                'Trạng thái ctv',
+                'TRẠNG THÁI CTV',
+                'Trạng thái',
+                'Trạng Thái',
+                'TRẠNG THÁI',
+                'Trạng thái ứng tuyển',
+                'Trạng thái tuyển dụng',
+                'Trạng thái ứng viên',
+                'Kết quả',
+                'Kết quả CTV',
+                'Kết quả tuyển',
+                'status',
+                'Status',
+                'STATUS',
+              ],
+              [
+                'trangthaictv',
+                'trangthai',
+                'status',
+                'ketqua',
+                'ketquactv',
+                'trangthaiungtuyen',
+                'trangthaituyendung',
+                'trangthaituyen',
+                'trangthaiungvien',
+                'ketquaxettuyen',
+              ]
+            );
+
+            // 16. Trạng thái phỏng vấn (tùy chọn)
+            const interview_status = extractRowValue(
+              row,
+              [
+                'Trạng thái Phỏng vấn',
+                'Trạng thái phỏng vấn',
+                'TRẠNG THÁI PHỎNG VẤN',
+                'Trạng thái PV',
+                'interview_status',
+                'Interview Status',
+              ],
+              ['trangthaiphongvan', 'trangthaipv', 'interviewstatus']
+            );
 
             const note = extractRowValue(
               row,
@@ -294,6 +451,7 @@ export const excelService = {
               accepted_department,
               position,
               status,
+              interview_status,
               note,
               admin_note,
             };
@@ -409,17 +567,19 @@ export const excelService = {
         return;
       }
 
-      // 5. Check status (default to PENDING)
-      const normalizedStatus = row.status || 'PENDING';
-      if (!VALID_STATUSES.includes(normalizedStatus)) {
+      // 5. Check Trạng thái CTV (Hỗ trợ tiếng Việt / tiếng Anh, mặc định PENDING nếu bỏ trống)
+      const parsedStatus = normalizeCollaboratorStatus(row.status);
+      if (parsedStatus === null) {
         errors.push({
           rowNumber: rowNum,
           studentId: normalizedMSSV,
           field: 'status',
-          message: `Dòng ${rowNum}: Trạng thái "${row.status}" không hợp lệ (Phải là PENDING, PASSED hoặc FAILED)`,
+          message: `Dòng ${rowNum}: Trạng thái CTV "${row.status}" không hợp lệ. Vui lòng chọn "Trúng tuyển" (PASSED), "Không trúng tuyển" (FAILED), hoặc "Đang chờ" (PENDING).`,
         });
         return;
       }
+      const normalizedStatus: CollaboratorStatus = parsedStatus;
+      const normalizedInterviewStatus = normalizeInterviewStatus(row.interview_status, normalizedStatus);
 
       // 6. Optional applied department
       let appliedDeptId = '';
@@ -458,7 +618,8 @@ export const excelService = {
         appliedDepartmentId: appliedDeptId,
         acceptedDepartmentId: acceptedDeptId,
         position: row.position || 'Cộng tác viên',
-        status: normalizedStatus as any,
+        status: normalizedStatus,
+        interviewStatus: normalizedInterviewStatus,
         publicNote: row.note || '',
         adminNote: adminNote,
         isDuplicate,
@@ -581,6 +742,7 @@ export const excelService = {
         'Số điện thoại': '0988776655',
         'Link Facebook': 'https://facebook.com/nguyenvanmau',
         Email: 'mau.nv.b23at@gmail.com',
+        'Trạng thái CTV': 'Trúng tuyển',
         'Điểm mạnh của bản thân': 'Chăm chỉ, ham học hỏi, kỹ năng làm việc nhóm tốt',
         'Hạn chế của bản thân': 'Đôi khi còn ngại nói trước đám đông',
         'Sở trường/ sở thích/ năng khiếu': 'Đá bóng, chơi cờ vua, nghiên cứu bảo mật mạng',
@@ -597,6 +759,7 @@ export const excelService = {
         'Số điện thoại': '0911223344',
         'Link Facebook': 'https://facebook.com/tranthithao',
         Email: 'thao.tt.b23at@gmail.com',
+        'Trạng thái CTV': 'Đang chờ',
         'Điểm mạnh của bản thân': 'Sáng tạo, thiết kế Canva/Photoshop, viết lách',
         'Hạn chế của bản thân': 'Chưa quản lý thời gian thật sự tối ưu',
         'Sở trường/ sở thích/ năng khiếu': 'Chụp ảnh, quay dựng video ngắn, viết content',
@@ -616,6 +779,7 @@ export const excelService = {
       { wch: 14 },
       { wch: 28 },
       { wch: 26 },
+      { wch: 16 }, // Trạng thái CTV
       { wch: 30 },
       { wch: 30 },
       { wch: 30 },

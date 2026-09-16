@@ -218,7 +218,7 @@ export const CollaboratorsPage: React.FC = () => {
     form.resetFields();
     form.setFieldsValue({
       ...record,
-      interviewStatus: record.interviewStatus || (record.status === 'PASSED' ? 'DAT' : record.status === 'FAILED' ? 'KHONG_DAT' : 'CHUA_PV'),
+      interviewStatus: record.interviewStatus || 'CHUA_PV',
     });
     setIsFormModalOpen(true);
   };
@@ -1365,14 +1365,18 @@ export const CollaboratorsPage: React.FC = () => {
         <div style={{ marginTop: '16px' }}>
           {/* Instructions */}
           <Alert
-            message="Hỗ trợ file xuất trực tiếp từ Google Form hoặc Excel"
+            message="Hỗ trợ file xuất trực tiếp từ Google Form hoặc file Excel quản lý CTV"
             description={
               <div>
-                Hệ thống tự động nhận diện 14 trường tiêu chuẩn từ Google Form:
+                Hệ thống tự động nhận diện 14 trường tiêu chuẩn từ Google Form và các cột thông tin mở rộng:
                 <br />
-                <strong>1. Dấu thời gian</strong> • <strong>2. Họ và Tên</strong> • <strong>3. Mã sinh viên</strong> • <strong>4. Lớp</strong> • <strong>5. Số điện thoại</strong> • <strong>6. Link Facebook</strong> • <strong>7. Email</strong> • <strong>8. Điểm mạnh</strong> • <strong>9. Hạn chế</strong> • <strong>10. Sở trường</strong> • <strong>11. Kinh nghiệm lập trình</strong> • <strong>12. Biết qua đâu</strong> • <strong>13. Mong đợi</strong> • <strong>14. Lý do tham gia</strong>.
+                • <strong>Thông tin cơ bản:</strong> Dấu thời gian, Họ và Tên, Mã sinh viên, Lớp, Số điện thoại, Link Facebook, Email.
                 <br />
-                Hệ thống sẽ tự động kiểm tra định dạng email, mã sinh viên trùng lặp và lưu toàn bộ câu trả lời phỏng vấn vào hồ sơ ứng viên.
+                • <strong>Trạng thái CTV:</strong> Cột <em>"Trạng thái CTV"</em> hoặc <em>"Trạng thái"</em> (tự động nhận diện: Trúng tuyển / Không trúng tuyển / Đang chờ, hoặc PASSED / FAILED / PENDING; mặc định là Đang chờ nếu để trống).
+                <br />
+                • <strong>Khảo sát & Câu hỏi form:</strong> Điểm mạnh, Hạn chế, Sở trường, Kinh nghiệm lập trình, Nguồn biết đến, Mong đợi, Lý do tham gia.
+                <br />
+                • Tự động kiểm tra định dạng email, chuẩn hóa SĐT (bảo toàn số 0 đầu), nhận diện trùng lặp MSSV và gán tag an toàn.
               </div>
             }
             type="info"
@@ -1489,15 +1493,31 @@ export const CollaboratorsPage: React.FC = () => {
                       ),
                   },
                   {
-                    title: 'Trạng thái',
+                    title: 'Trạng thái CTV',
                     dataIndex: 'status',
                     key: 'status',
-                    width: 110,
-                    render: (status) => (
-                      <Tag color={status === 'PASSED' ? 'green' : status === 'PENDING' ? 'blue' : 'default'}>
-                        {status}
-                      </Tag>
-                    ),
+                    width: 140,
+                    render: (status: CollaboratorStatus) => {
+                      if (status === 'PASSED') {
+                        return (
+                          <Tag color="success" style={{ fontWeight: 600 }}>
+                            Trúng tuyển
+                          </Tag>
+                        );
+                      }
+                      if (status === 'FAILED') {
+                        return (
+                          <Tag color="default" style={{ fontWeight: 600 }}>
+                            Không trúng tuyển
+                          </Tag>
+                        );
+                      }
+                      return (
+                        <Tag color="processing" style={{ fontWeight: 600 }}>
+                          Đang chờ
+                        </Tag>
+                      );
+                    },
                   },
                 ]}
               />

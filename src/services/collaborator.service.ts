@@ -245,23 +245,13 @@ export const collaboratorService = {
 
   // ADMIN: Update collaborator
   async updateCollaborator(id: string, data: Partial<Collaborator>): Promise<void> {
-    // 2-way automatic status synchronization between Collaborator status and Interview status
     const syncedData: Partial<Collaborator> = { ...data };
 
+    // Nếu cập nhật kết quả phỏng vấn là ĐẠT hoặc KHÔNG ĐẠT thì đồng bộ sang trạng thái CTV
     if (syncedData.interviewStatus === 'DAT') {
       syncedData.status = 'PASSED';
     } else if (syncedData.interviewStatus === 'KHONG_DAT') {
       syncedData.status = 'FAILED';
-    } else if (
-      syncedData.interviewStatus &&
-      ['CHUA_PV', 'DANG_PV', 'CAN_XEM_XET'].includes(syncedData.interviewStatus) &&
-      (!syncedData.status || syncedData.status === 'PASSED' || syncedData.status === 'FAILED')
-    ) {
-      syncedData.status = 'PENDING';
-    } else if (syncedData.status === 'PASSED' && (!syncedData.interviewStatus || syncedData.interviewStatus === 'CHUA_PV')) {
-      syncedData.interviewStatus = 'DAT';
-    } else if (syncedData.status === 'FAILED' && (!syncedData.interviewStatus || syncedData.interviewStatus === 'CHUA_PV')) {
-      syncedData.interviewStatus = 'KHONG_DAT';
     }
 
     if (isFirebaseConfigured && db) {
