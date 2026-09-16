@@ -12,6 +12,7 @@ import {
   Lock,
   Bell,
   GraduationCap,
+  Mail,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import confetti from 'canvas-confetti';
@@ -341,7 +342,7 @@ export const CheckResultPage: React.FC = () => {
                   </div>
                   <h2 style={{ fontSize: 'clamp(1.7rem,3.2vw,2.1rem)', fontWeight: 900, color: '#15803d', margin: '0 0 6px' }}>CHÚC MỪNG BẠN!</h2>
                   <p style={{ color: '#475569', fontSize: '0.96rem', margin: 0, fontWeight: 600 }}>
-                    Bạn đã chính thức vượt qua vòng CV và tiến vào phỏng vấn của Liên chi Đoàn!
+                    Bạn đã chính thức vượt qua vòng CV và tiến vào vòng phỏng vấn của Liên chi Đoàn!
                   </p>
                 </div>
 
@@ -355,52 +356,35 @@ export const CheckResultPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div style={{ background: '#ffffff', borderRadius: '14px', padding: '22px 20px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', color: '#1e293b', fontSize: '0.94rem', lineHeight: 1.7, marginBottom: '20px' }}>
-                  <p style={{ fontWeight: 700, marginBottom: '10px' }}>Xin chào bạn <span style={{ color: '#0284c7' }}>{result.fullName}</span>,</p>
-                  <p style={{ marginBottom: '10px' }}>Lời đầu tiên, LCĐ Khoa ATTT xin cảm ơn sự quan tâm của bạn dành cho sự kiện Tuyển CTV Gen 2.0.</p>
-                  <p style={{ marginBottom: '10px' }}>
-                    Sau quá trình xem xét và đánh giá hồ sơ, chúng mình rất vui mừng được thông báo:<br />
-                    <span style={{ color: '#15803d', fontWeight: 700, fontSize: '1rem' }}>Bạn đã chính thức vượt qua vòng CV và tiến vào phỏng vấn của Liên chi Đoàn!</span>
+                <div style={{ background: '#ffffff', borderRadius: '14px', padding: '24px 22px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', color: '#1e293b', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: '20px' }}>
+                  <p style={{ fontWeight: 700, marginBottom: '12px' }}>Xin chào bạn <span style={{ color: '#0284c7' }}>{result.fullName}</span>,</p>
+                  <p style={{ marginBottom: '12px' }}>Lời đầu tiên, LCĐ Khoa An toàn thông tin xin cảm ơn sự quan tâm của bạn dành cho đợt tuyển CTV Gen 2.0.</p>
+                  <p style={{ marginBottom: '12px' }}>
+                    Sau quá trình xem xét và đánh giá hồ sơ, chúng mình rất vui mừng thông báo:
                   </p>
-                  <p style={{ marginBottom: '16px' }}>Chúng mình đánh giá cao sự phù hợp của bạn với định hướng hoạt động của Liên chi. Hy vọng có thể trao đổi thêm với bạn trong buổi phỏng vấn này để hai bên có thể hiểu thêm về nhau hơn.</p>
+                  <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '12px', padding: '14px 18px', marginBottom: '16px', textAlign: 'center' }}>
+                    <span style={{ color: '#059669', fontWeight: 800, fontSize: '1.05rem', display: 'block' }}>
+                      🎉 Bạn đã chính thức vượt qua vòng CV và tiến vào vòng phỏng vấn của Liên chi Đoàn!
+                    </span>
+                  </div>
+                  <p style={{ marginBottom: '14px' }}>
+                    Chúng mình đánh giá cao sự phù hợp của bạn với định hướng hoạt động của Liên chi. Hy vọng buổi phỏng vấn sẽ là cơ hội để chúng mình lắng nghe thêm những chia sẻ của bạn và để hai bên hiểu nhau hơn.
+                  </p>
 
-                  <div style={{ background: '#f0f9ff', borderRadius: '12px', padding: '18px 20px', boxShadow: '0 2px 10px rgba(2,132,199,0.05)', marginBottom: '16px' }}>
-                    <div style={{ fontWeight: 800, color: '#0369a1', marginBottom: '12px', fontSize: '0.96rem' }}>DƯỚI ĐÂY LÀ CÁC THÔNG TIN CHI TIẾT CHO BUỔI PHỎNG VẤN:</div>
-                    <div style={{ marginBottom: '12px', fontSize: '0.94rem' }}>
-                      <strong>Thời gian:</strong> <span style={{ color: '#0284c7', fontWeight: 700 }}>Chủ nhật, ngày 20/09/2026</span>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '10px', marginBottom: '14px' }}>
-                      <div style={{ background: '#ffffff', padding: '12px 14px', borderRadius: '10px', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
-                        <div style={{ fontWeight: 800, color: '#0284c7', fontSize: '0.88rem', marginBottom: '4px' }}>Buổi Sáng:</div>
-                        <div style={{ fontSize: '0.88rem', color: '#334155' }}>• <strong>Ca 1:</strong> 8h00 - 10h00</div>
-                        <div style={{ fontSize: '0.88rem', color: '#334155' }}>• <strong>Ca 2:</strong> 10h00 - 12h00</div>
-                      </div>
-                      <div style={{ background: '#ffffff', padding: '12px 14px', borderRadius: '10px', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
-                        <div style={{ fontWeight: 800, color: '#0284c7', fontSize: '0.88rem', marginBottom: '4px' }}>Buổi Chiều:</div>
-                        <div style={{ fontSize: '0.88rem', color: '#334155' }}>• <strong>Ca 3:</strong> 13h00 - 15h00</div>
-                        <div style={{ fontSize: '0.88rem', color: '#334155' }}>• <strong>Ca 4:</strong> 15h00 - 17h00</div>
-                      </div>
-                    </div>
-                    <div style={{ marginBottom: '12px' }}>
-                      <strong>Bạn có thể lựa chọn thời gian phỏng vấn tại link sau đây:</strong>
-                      <div style={{ marginTop: '6px' }}>
-                        <a href="https://forms.gle/isc-interview-gen2" target="_blank" rel="noreferrer"
-                          style={{ display: 'inline-block', background: '#0284c7', color: '#ffffff', fontWeight: 700, fontSize: '0.88rem', padding: '6px 16px', borderRadius: '6px', textDecoration: 'none' }}>
-                          👉 Đăng ký ca phỏng vấn tại đây
-                        </a>
-                      </div>
-                    </div>
-                    <div style={{ marginBottom: '12px' }}>
-                      <strong>Địa điểm:</strong> Văn phòng Đoàn Thanh niên / Phòng Hội trường Khoa ATTT (Chi tiết sẽ gửi qua email &amp; nhóm Zalo)
-                    </div>
-                    <div style={{ padding: '10px 14px', background: '#ffffff', borderRadius: '8px', boxShadow: '0 2px 6px rgba(154,52,18,0.08)', fontSize: '0.88rem', color: '#9a3412' }}>
-                      <strong>Lưu ý:</strong> Hãy đến sớm trước 10 phút để chuẩn bị tâm lý sẵn sàng và tự tin để có một buổi phỏng vấn thành công nhé.
+                  <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '12px', padding: '16px 18px', marginBottom: '16px', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <Mail size={22} color="#0284c7" style={{ flexShrink: 0, marginTop: '2px' }} />
+                    <div style={{ color: '#0369a1', fontSize: '0.94rem', lineHeight: 1.6 }}>
+                      <strong style={{ color: '#0284c7' }}>Thời gian phỏng vấn sẽ được thông báo sau qua email.</strong> Bạn hãy thường xuyên kiểm tra hộp thư để cập nhật thông tin nhé!
                     </div>
                   </div>
 
-                  <div style={{ textAlign: 'right', marginTop: '16px' }}>
+                  <p style={{ marginBottom: '16px', fontWeight: 600, color: '#0f172a' }}>
+                    Chúc bạn chuẩn bị thật tốt và tự tin bước vào vòng phỏng vấn!
+                  </p>
+
+                  <div style={{ textAlign: 'right', marginTop: '20px' }}>
                     <div style={{ fontStyle: 'italic', color: '#64748b' }}>Thân mến,</div>
-                    <div style={{ fontWeight: 800, color: '#0f172a' }}>Liên Chi Đoàn Khoa An toàn thông tin</div>
+                    <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '1rem' }}>Liên chi Đoàn Khoa An toàn thông tin</div>
                   </div>
                 </div>
 
